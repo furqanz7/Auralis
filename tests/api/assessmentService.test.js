@@ -132,6 +132,7 @@ describe("assessment service", () => {
     const fixture = createFixture();
     const { started } = await inviteAndStart(fixture);
 
+    expect(started.status).toBe("started");
     expect(started.questions).toHaveLength(18);
     expect(started.questions[0].id).toBe("ai-18");
     expect(fixture.state.sessions[0].questionSnapshot).toHaveLength(18);

@@ -266,7 +266,7 @@ export function createAssessmentService({
           deadlineAt: new Date(startedAt.getTime() + definition.durationSeconds * 1000)
         });
       }
-      return browserSession(session);
+      return { status: "started", ...browserSession(session) };
     },
 
     async saveAnswer(token, questionId, optionId, version) {
