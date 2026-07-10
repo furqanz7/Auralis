@@ -328,12 +328,17 @@ describe("verification service", () => {
     expect(fixture.application.lifecycleState).toBe("verification_pending");
   });
 
-  test("loads a valid verification while hosted checkout is not configured", async () => {
+  test("loads a valid verification with a manual Wise payment handoff", async () => {
     const fixture = createFixture();
     const statusService = createVerificationStatusService({
       repository: fixture.repository,
       clock: { now: () => new Date(NOW) },
-      checkoutAvailable: false
+      checkoutAvailable: true,
+      payment: {
+        provider: "wise",
+        mode: "manual",
+        url: "https://wise.com/pay/business/furqanm135"
+      }
     });
 
     await expect(
@@ -341,7 +346,12 @@ describe("verification service", () => {
     ).resolves.toMatchObject({
       state: "pending",
       applicationReference: "AUR-1",
-      checkoutAvailable: false
+      checkoutAvailable: true,
+      payment: {
+        provider: "wise",
+        mode: "manual",
+        url: "https://wise.com/pay/business/furqanm135"
+      }
     });
     expect(fixture.payment.createHostedSession).not.toHaveBeenCalled();
   });

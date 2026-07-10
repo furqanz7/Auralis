@@ -24,12 +24,7 @@ describe("hiring production readiness", () => {
       "RESEND_API_KEY",
       "RESEND_FROM",
       "HIRING_RECRUITER_EMAIL",
-      "VITE_TBC_CHECKOUT_HOST",
-      "TBC_BASE_URL",
-      "TBC_CHECKOUT_HOST",
-      "TBC_API_KEY",
-      "TBC_CLIENT_ID",
-      "TBC_CLIENT_SECRET",
+      "WISE_PAYMENT_URL",
       "CRON_SECRET"
     ]) {
       expect(names.has(name), `${name} is missing`).toBe(true);
@@ -39,9 +34,6 @@ describe("hiring production readiness", () => {
       "HIRING_IP_HASH_SECRET",
       "SUPABASE_SERVICE_ROLE_KEY",
       "RESEND_API_KEY",
-      "TBC_API_KEY",
-      "TBC_CLIENT_ID",
-      "TBC_CLIENT_SECRET",
       "CRON_SECRET"
     ]) {
       expect(source).toMatch(new RegExp(`^${secret}=$`, "m"));
@@ -59,9 +51,8 @@ describe("hiring production readiness", () => {
     for (const phrase of [
       "Supabase migrations",
       "Resend Internal Delivery",
-      "TBC merchant",
-      "preauthorization",
-      "/api/payments/tbc/callback",
+      "Wise Manual Payment",
+      "manual refund",
       "Vercel Cron",
       "Auralis, Tbilisi, Georgia",
       "HIRING_PROVIDER_MODE=live",

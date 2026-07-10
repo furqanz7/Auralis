@@ -63,12 +63,13 @@ describe("useVerificationStatus", () => {
     expect(result.current.status).not.toBe("completed");
   });
 
-  test("does not poll repeatedly while hosted checkout is unavailable", async () => {
+  test("does not poll a manual payment link that has no automatic callback", async () => {
     vi.useFakeTimers();
     const client = {
       getVerificationStatus: vi.fn(async () => ({
         state: "pending",
-        checkoutAvailable: false
+        checkoutAvailable: true,
+        payment: { provider: "wise", mode: "manual" }
       }))
     };
     const { result } = renderHook(() =>

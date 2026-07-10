@@ -1668,12 +1668,41 @@ body.hiring-active .route-veil {
   line-height: 1.4;
 }
 
-.verification-summary > div svg {
+.verification-summary > div > svg {
   width: 29px;
   height: 29px;
   padding: 5px;
   border: 1px solid rgba(245, 240, 232, 0.68);
   border-radius: 50%;
+}
+
+.verification-summary > .verification-reference-row {
+  grid-template-columns: 32px minmax(0, 1fr) 34px;
+}
+
+.verification-reference-row strong,
+.verification-summary > div:not(.verification-summary-amount) strong {
+  color: var(--hiring-white);
+  font-weight: 500;
+}
+
+.verification-copy {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--hiring-line-strong);
+  border-radius: 0;
+  color: var(--hiring-white);
+  background: transparent;
+  cursor: pointer;
+}
+
+.verification-copy:hover,
+.verification-copy:focus-visible {
+  border-color: var(--signal);
+  color: var(--signal);
 }
 
 .verification-summary > .verification-summary-amount {
@@ -1711,6 +1740,15 @@ body.hiring-active .route-veil {
   color: #ff6d63;
   font-size: 0.73rem;
   line-height: 1.45;
+}
+
+.verification-manual-note {
+  margin: -5px 0 18px;
+  padding-left: 13px;
+  border-left: 2px solid var(--signal);
+  color: rgba(245, 240, 232, 0.7);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .verification-action,

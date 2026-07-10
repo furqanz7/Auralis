@@ -22,8 +22,9 @@ describe("hiring privacy experience", () => {
     expect(screen.getByText(/Supabase/i)).toBeVisible();
     expect(screen.getByText(/Resend/i)).toBeVisible();
     expect(screen.queryByText(/Cloudflare Turnstile/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/TBC.*hosted payment portal/i)).toBeVisible();
-    expect(screen.getByText(/never receives or stores card details/i)).toBeVisible();
+    expect(screen.getByText(/Wise.*manual payment link/i)).toBeVisible();
+    expect(screen.getByText(/refund.*initiated manually/i)).toBeVisible();
+    expect(screen.getByText(/refund timing varies/i)).toBeVisible();
     expect(
       screen.getAllByRole("link", { name: "auralis.careers@proton.me" })[0]
     ).toHaveAttribute("href", "mailto:auralis.careers@proton.me");

@@ -12,9 +12,7 @@ npm run test:e2e
 npm run build
 ```
 
-Use `.env.example` as the environment inventory. `HIRING_PROVIDER_MODE=test` selects deterministic in-memory providers locally and does not require live Supabase, Resend, or TBC credentials. Vercel production rejects test mode; production must set `HIRING_PROVIDER_MODE=live`.
-
-The browser uses `VITE_TBC_CHECKOUT_HOST`. Secrets without the `VITE_` prefix are server-only and must never be exposed to the browser.
+Use `.env.example` as the environment inventory. `HIRING_PROVIDER_MODE=test` selects deterministic in-memory providers locally and does not require live Supabase or Resend credentials. Vercel production rejects test mode; production must set `HIRING_PROVIDER_MODE=live`.
 
 ## Direct Applications
 
@@ -53,24 +51,15 @@ After entering a newly rotated Resend API key in the ignored `.env.local` file, 
 npm run resend:verify
 ```
 
-### TBC Merchant
+### Wise Manual Payment
 
-Obtain a TBC merchant account with EUR payments and preauthorization/cancellation enabled. Confirm that the TBC merchant configuration supports EUR 2.99, `preAuth: true`, and immediate full cancellation without capture.
+`WISE_PAYMENT_URL` is the reusable Wise Business payment link shown only after a valid private verification token is loaded. The applicant must select EUR, enter 2.99, and place the application reference in Wise's Description field.
 
-Set the TBC API key, client ID, client secret, API base URL, and exact checkout hostname. Register this server callback with TBC:
-
-```text
-https://auralis-nine.vercel.app/api/payments/tbc/callback
-```
-
-The browser return is not authoritative. Only the callback plus a server-to-server provider lookup may complete verification. Auralis does not collect or store card data.
+This flow does not provide application-specific automatic confirmation or an immediate authorization release. Auralis reconciles the payment manually using the description and initiates a manual refund from Wise. Refund arrival depends on Wise and the original payment method and must not be described as instant. Payment verification never changes assessment results, eligibility, review order, or contractor selection.
 
 ### Vercel Cron
 
-Set a random `CRON_SECRET` of at least 32 characters. Vercel sends it as `Authorization: Bearer <secret>`. The project schedules:
-
-- fallback verification cancellation retries daily at 00:00 UTC;
-- hiring retention daily at 02:30 UTC.
+Set a random `CRON_SECRET` of at least 32 characters. Vercel sends it as `Authorization: Bearer <secret>`. The project schedules hiring retention daily at 02:30 UTC. Automated payment-cancellation retries are disabled because the active Wise flow is manual.
 
 Use a Vercel plan that supports the configured cron frequency. Confirm successful invocations and alerts after deployment.
 
@@ -87,8 +76,9 @@ The privacy controller is identified as Auralis, Tbilisi, Georgia. Have qualifie
 - Apply and inspect all Supabase migrations and private storage settings.
 - Complete Resend internal-delivery verification to `auralis.careers@proton.me`.
 - Confirm the hidden application bot-trap rejects populated automated submissions without affecting legitimate applicants.
-- Complete TBC merchant EUR preauthorization, callback, cancellation, duplicate-callback, and delayed-callback tests.
-- Verify Vercel Cron authentication, retry schedules, retention runs, and operational alerts.
+- Confirm the Wise link opens, requires the applicant to select EUR and enter 2.99, and displays the application reference to use as the payment description.
+- Confirm the manual refund wording remains visible and never promises instant processing.
+- Verify Vercel Cron authentication, retention runs, and operational alerts.
 - Verify the published controller identity, Auralis, Tbilisi, Georgia, and obtain legal review.
 - Run `npm test`, `npm run test:e2e`, and `npm run build`.
 - Verify the unlisted `/apply` route, assessment, verification, completion, and privacy routes at desktop and mobile widths with no text overlap or horizontal overflow.

@@ -1,11 +1,14 @@
 import {
-  ArrowRight,
   Check,
   Circle,
   Clock3,
+  Copy,
+  Euro,
+  ExternalLink,
+  FileText,
   Info,
   LockKeyhole,
-  X
+  RotateCcw
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -16,60 +19,52 @@ import {
 import HiringFlowHeader from "../components/HiringFlowHeader.jsx";
 import { useVerificationStatus } from "../hooks/useVerificationStatus.js";
 
-const SESSION_KEY = "auralis:hiring:verification-session";
-
-function createIdempotencyKey() {
-  const suffix = globalThis.crypto?.randomUUID?.() ??
-    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  return `verification-${suffix}`;
-}
-
-function stableSessionKey(applicationReference) {
-  try {
-    const stored = JSON.parse(sessionStorage.getItem(SESSION_KEY));
-    if (
-      stored?.applicationReference === applicationReference &&
-      typeof stored?.idempotencyKey === "string"
-    ) {
-      return stored.idempotencyKey;
-    }
-  } catch {
-    // A new key is safe when session storage is unavailable.
-  }
-  const idempotencyKey = createIdempotencyKey();
-  try {
-    sessionStorage.setItem(
-      SESSION_KEY,
-      JSON.stringify({ applicationReference, idempotencyKey })
-    );
-  } catch {
-    // The server still enforces idempotency for this request.
-  }
-  return idempotencyKey;
-}
-
-function validateApprovalUrl(value, expectedHost) {
+function validateWisePaymentUrl(value) {
   try {
     const url = new URL(value);
     if (
       url.protocol !== "https:" ||
-      url.hostname.toLowerCase() !== expectedHost.toLowerCase() ||
+      url.hostname !== "wise.com" ||
       url.username ||
-      url.password
+      url.password ||
+      !/^\/pay\/business\/[A-Za-z0-9_-]+\/?$/.test(url.pathname)
     ) {
       throw new Error();
     }
     return url.toString();
   } catch {
-    throw new Error("HOSTED_URL_INVALID");
+    return null;
   }
 }
 
-export default function VerificationPage({
-  client,
-  navigateExternal = (url) => window.location.assign(url),
-  expectedCheckoutHost = import.meta.env.VITE_TBC_CHECKOUT_HOST ?? "tpay.tbcbank.ge"
-}) {
+async function writeToClipboard(value) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // Some embedded browsers expose the API but deny writes.
+    }
+  }
+
+  const field = document.createElement("textarea");
+  const activeElement = document.activeElement;
+  field.value = value;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.opacity = "0";
+  document.body.append(field);
+  field.select();
+
+  try {
+    return document.execCommand?.("copy") === true;
+  } finally {
+    field.remove();
+    activeElement?.focus?.();
+  }
+}
+
+export default function VerificationPage({ client }) {
   const { token } = useParams();
   const isDemo = import.meta.env.DEV && token === "demo-verification";
   const activeClient = useMemo(
@@ -77,8 +72,7 @@ export default function VerificationPage({
     [client, isDemo]
   );
   const verification = useVerificationStatus({ token, client: activeClient });
-  const [actionState, setActionState] = useState("idle");
-  const [actionError, setActionError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("hiring-active");
@@ -94,23 +88,13 @@ export default function VerificationPage({
     };
   }, []);
 
-  async function beginVerification() {
-    if (actionState === "opening" || !verification.data) return;
-    setActionState("opening");
-    setActionError("");
+  async function copyReference() {
+    const reference = verification.data?.applicationReference;
+    if (!reference) return;
     try {
-      const session = await activeClient.createVerificationSession(
-        token,
-        stableSessionKey(verification.data.applicationReference)
-      );
-      navigateExternal(
-        validateApprovalUrl(session.approvalUrl, expectedCheckoutHost)
-      );
+      setCopied(await writeToClipboard(reference));
     } catch {
-      setActionState("error");
-      setActionError(
-        "The secure payment portal could not be opened. Please try again."
-      );
+      setCopied(false);
     }
   }
 
@@ -140,21 +124,16 @@ export default function VerificationPage({
   }
 
   const data = verification.data;
-  const amount = data?.verification?.amountMinor === 299 ? "€2.99" : "€2.99";
-  const processing = verification.status === "processing";
-  const checkoutAvailable = data?.checkoutAvailable !== false;
-  const verificationStatusLabel = processing
-    ? "Verification processing"
-    : checkoutAvailable
-      ? "Payment verification pending"
-      : "Payment portal unavailable";
-  const actionLabel = !checkoutAvailable
-    ? "Payment portal unavailable"
-    : actionState === "opening"
-      ? "Opening secure portal"
-      : processing
-        ? "Verification processing"
-        : "Continue to payment portal";
+  const amount = "€2.99";
+  const paymentUrl =
+    data?.checkoutAvailable &&
+    data?.payment?.provider === "wise" &&
+    data?.payment?.mode === "manual"
+      ? validateWisePaymentUrl(data.payment.url)
+      : null;
+  const paymentStatusLabel = paymentUrl
+    ? "Manual Wise payment"
+    : "Payment link unavailable";
 
   return (
     <main className="hiring-page verification-page">
@@ -162,23 +141,23 @@ export default function VerificationPage({
       <div className="verification-shell">
         <section className="verification-overview" aria-labelledby="verification-title">
           <div className="verification-overview-content">
-            <h1 id="verification-title">One final verification<span aria-hidden="true">.</span></h1>
+            <h1 id="verification-title">One final step<span aria-hidden="true">.</span></h1>
             <span className="hiring-role-accent" aria-hidden="true" />
             <p>
-              We use a temporary {amount} payment authorization to reduce automated and duplicate submissions.
+              Use Wise to send {amount} for manual application verification.
             </p>
             <p>
-              The amount is not captured. We cancel the authorization immediately after the provider confirms it, although your bank may take longer to display the released hold.
+              Select EUR and enter {amount}. Add your application reference in Wise&apos;s Description field so the payment can be matched.
             </p>
             <p>
-              This verification never changes your assessment result, review order, eligibility, or contractor selection outcome.
+              Wise does not confirm this step to Auralis automatically. The refund is initiated manually after reconciliation, and refund timing varies. This never changes your assessment result, review order, eligibility, or contractor selection outcome.
             </p>
 
             <div className="verification-application-status">
               <h2>Application status</h2>
               <div><Check size={18} aria-hidden="true" /><span>CV received</span></div>
               <div><Check size={18} aria-hidden="true" /><span>Assessment complete</span></div>
-              <div className="is-pending"><Circle size={18} aria-hidden="true" /><span>{verificationStatusLabel}</span></div>
+              <div className="is-pending"><Circle size={18} aria-hidden="true" /><span>{paymentStatusLabel}</span></div>
             </div>
           </div>
           <div className="verification-overview-art" aria-hidden="true">
@@ -188,57 +167,60 @@ export default function VerificationPage({
 
         <section className="verification-portal" aria-labelledby="portal-title">
           <div className="verification-portal-inner">
-            <h2 id="portal-title">Secure verification portal</h2>
+            <h2 id="portal-title">Pay with Wise</h2>
             <div className="verification-portal-copy">
-              {checkoutAvailable ? (
-                <>
-                  <p>You will continue to our payment provider to authorize {amount}.</p>
-                  <p>The provider handles payment details. Auralis never receives or stores them.</p>
-                  <p>After verification, you will return here automatically.</p>
-                </>
-              ) : (
-                <>
-                  <p>The hosted payment portal is temporarily unavailable.</p>
-                  <p>Your application and assessment remain securely submitted.</p>
-                  <p>Human review is not affected by payment verification availability.</p>
-                </>
-              )}
+              <p>Open Wise in a new tab and choose EUR as the payment currency.</p>
+              <p>Enter 2.99, then paste your application reference into Description.</p>
+              <p>Auralis matches the payment and handles the refund manually.</p>
             </div>
 
             <div className="verification-summary">
               <div className="verification-summary-amount">
-                <span>Temporary authorization</span><strong>{amount}</strong>
+                <span>Amount to enter</span><strong>{amount}</strong>
               </div>
-              <div><Clock3 size={22} aria-hidden="true" /><span>Not captured</span></div>
-              <div><X size={22} aria-hidden="true" /><span>Cancelled immediately after confirmation</span></div>
-              <div><Info size={22} aria-hidden="true" /><span>Bank release timing may vary</span></div>
+              <div><Euro size={22} aria-hidden="true" /><span>Currency: <strong>EUR</strong></span></div>
+              <div className="verification-reference-row">
+                <FileText size={22} aria-hidden="true" />
+                <span>Wise Description: <strong>{data.applicationReference}</strong></span>
+                <button
+                  className="verification-copy"
+                  type="button"
+                  onClick={copyReference}
+                  aria-label={copied ? "Application reference copied" : "Copy application reference"}
+                  title={copied ? "Reference copied" : "Copy application reference"}
+                >
+                  {copied ? <Check size={17} aria-hidden="true" /> : <Copy size={17} aria-hidden="true" />}
+                </button>
+              </div>
+              <div><RotateCcw size={22} aria-hidden="true" /><span>Refund initiated manually by Auralis</span></div>
+              <div><Clock3 size={22} aria-hidden="true" /><span>Refund arrival depends on Wise and the payment method</span></div>
             </div>
 
             <div className="verification-action-block">
               <p>
                 <LockKeyhole size={22} aria-hidden="true" />
-                {checkoutAvailable
-                  ? "Opens our secure payment provider"
-                  : "Hosted provider setup required"}
+                Wise opens in a new tab. Keep this page for the reference.
               </p>
-              {!checkoutAvailable ? (
+              {!paymentUrl ? (
                 <div className="verification-action-error" role="status">
-                  Payment verification is temporarily unavailable. Your application remains submitted and review is not affected.
+                  The payment link is currently unavailable. Your application remains submitted and review is not affected.
                 </div>
-              ) : actionError ? (
-                <div className="verification-action-error" role="alert">
-                  {actionError}
+              ) : (
+                <div className="verification-manual-note" role="note">
+                  Refunds are not instant. Processing time depends on Wise and the original payment method.
                 </div>
+              )}
+              {paymentUrl ? (
+                <a
+                  className="verification-action"
+                  href={paymentUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  Open Wise payment link
+                  <ExternalLink size={23} aria-hidden="true" />
+                </a>
               ) : null}
-              <button
-                className="verification-action"
-                type="button"
-                onClick={beginVerification}
-                disabled={!checkoutAvailable || actionState === "opening" || processing}
-              >
-                {actionLabel}
-                <ArrowRight size={24} aria-hidden="true" />
-              </button>
             </div>
           </div>
         </section>

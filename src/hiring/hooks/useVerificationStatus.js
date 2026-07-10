@@ -43,7 +43,8 @@ export function useVerificationStatus({
         setState({ status, data, error: null, timedOut: false });
         if (
           TERMINAL_STATES.has(status) ||
-          data.checkoutAvailable === false
+          data.checkoutAvailable === false ||
+          data.payment?.mode === "manual"
         ) {
           return;
         }

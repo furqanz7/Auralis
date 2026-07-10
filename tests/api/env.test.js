@@ -4,7 +4,8 @@ import {
   readAssessmentEnv,
   readCronEnv,
   readServerEnv,
-  readVerificationEnv
+  readVerificationEnv,
+  readWisePaymentUrl
 } from "../../api/_lib/env.js";
 
 const validEnv = {
@@ -84,6 +85,25 @@ describe("readServerEnv", () => {
         TBC_CLIENT_SECRET: ""
       })
     ).toBe(false);
+  });
+
+  test("accepts only the configured Wise Business payment-link origin", () => {
+    expect(
+      readWisePaymentUrl({
+        WISE_PAYMENT_URL:
+          "https://wise.com/pay/business/furqanm135?utm_source=open_link"
+      })
+    ).toBe("https://wise.com/pay/business/furqanm135?utm_source=open_link");
+    expect(
+      readWisePaymentUrl({
+        WISE_PAYMENT_URL: "https://wise.example/pay/business/furqanm135"
+      })
+    ).toBeNull();
+    expect(
+      readWisePaymentUrl({
+        WISE_PAYMENT_URL: "http://wise.com/pay/business/furqanm135"
+      })
+    ).toBeNull();
   });
 
   test("allows deterministic providers locally without live service secrets", () => {

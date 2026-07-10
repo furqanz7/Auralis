@@ -112,16 +112,16 @@ export default function PrivacyPage() {
               Auralis makes no automated hiring decisions. Every CV is available for human review, and assessment results support rather than replace professional judgment. The optional payment verification does not change your score, eligibility, review order, or selection outcome.
             </p>
             <p>
-              The verification uses a temporary EUR 2.99 authorization in a third-party portal. It is not captured and is cancelled after provider confirmation. Your bank may take additional time to display the release.
+              The optional verification uses a manual EUR 2.99 payment through a Wise Business payment link. You choose EUR, enter the amount, and include your application reference in the payment description. Auralis matches the payment, and the refund is initiated manually. Refund timing varies by payment method and is not instant.
             </p>
           </PolicySection>
 
           <PolicySection id="providers" number="04" title="Providers and international handling">
             <p>
-              Auralis uses vetted service providers to operate this experience: Supabase for private application records and CV storage, Resend for internal operational notifications, Vercel for website and serverless infrastructure, and TBC through its hosted payment portal for verification.
+              Auralis uses vetted service providers to operate this experience: Supabase for private application records and CV storage, Resend for internal operational notifications, Vercel for website and serverless infrastructure, and Wise through its manual payment link for verification.
             </p>
             <p>
-              TBC and its payment environment handle payment credentials. Auralis never receives or stores card details; it keeps only the minimum provider reference and verification state needed to confirm and cancel the authorization.
+              Wise handles payment credentials and payment processing. Auralis does not collect card details on this website. Auralis may receive the payer and transaction information Wise makes available and uses the application reference to match the payment, initiate the manual refund, and resolve payment questions.
             </p>
             <p>
               Some providers may process information outside Georgia or your country. Where required, Auralis uses contractual and organizational safeguards intended to protect those transfers.

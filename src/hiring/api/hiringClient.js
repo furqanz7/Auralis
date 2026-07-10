@@ -297,15 +297,14 @@ export function createDemoVerificationClient(state = "pending") {
         role: { title: "Senior AI Product Engineer" },
         verification: {
           amountMinor: 299,
-          currency: "EUR",
-          authorization: state === "pending" ? "pending" : "confirmed",
-          release: state === "completed" ? "confirmed" : "processing"
+          currency: "EUR"
+        },
+        checkoutAvailable: true,
+        payment: {
+          provider: "wise",
+          mode: "manual",
+          url: "https://wise.com/pay/business/furqanm135?utm_source=open_link"
         }
-      };
-    },
-    async createVerificationSession() {
-      return {
-        approvalUrl: "https://tpay.tbcbank.ge/checkout/auralis-preview"
       };
     }
   };

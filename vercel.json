@@ -3,10 +3,6 @@
   "cleanUrls": true,
   "crons": [
     {
-      "path": "/api/cron/verification-retries",
-      "schedule": "0 0 * * *"
-    },
-    {
       "path": "/api/cron/hiring-retention",
       "schedule": "30 2 * * *"
     }

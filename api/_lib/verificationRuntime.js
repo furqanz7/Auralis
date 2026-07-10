@@ -5,9 +5,9 @@ import {
 } from "./adapters/supabase.js";
 import { createPaymentAdapter } from "./adapters/tbcPayment.js";
 import {
-  hasVerificationProviderConfig,
   readAssessmentEnv,
-  readVerificationEnv
+  readVerificationEnv,
+  readWisePaymentUrl
 } from "./env.js";
 import { createVerificationReturnTokenFactory } from "./tokens.js";
 import {
@@ -45,10 +45,17 @@ export function createVerificationRuntime({
   });
 }
 
-export function createVerificationStatusRuntime({ client, checkoutAvailable }) {
+export function createVerificationStatusRuntime({ client, wisePaymentUrl }) {
   return createVerificationStatusService({
     repository: createSupabaseVerificationRepository({ client }),
-    checkoutAvailable
+    checkoutAvailable: Boolean(wisePaymentUrl),
+    payment: wisePaymentUrl
+      ? {
+          provider: "wise",
+          mode: "manual",
+          url: wisePaymentUrl
+        }
+      : null
   });
 }
 
@@ -78,7 +85,7 @@ export function getVerificationStatusRuntimeService() {
         ? getTestHiringRuntime(env).verification
         : createVerificationStatusRuntime({
             client: getSupabaseAdmin(),
-            checkoutAvailable: hasVerificationProviderConfig()
+            wisePaymentUrl: readWisePaymentUrl()
           });
   }
   return statusRuntimeService;

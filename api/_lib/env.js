@@ -53,6 +53,23 @@ export function hasVerificationProviderConfig(source = process.env) {
   return liveVerificationServerEnvSchema.safeParse(source).success;
 }
 
+export function readWisePaymentUrl(source = process.env) {
+  const result = z.string().url().safeParse(source.WISE_PAYMENT_URL);
+  if (!result.success) return null;
+
+  const url = new URL(result.data);
+  if (
+    url.protocol !== "https:" ||
+    url.hostname !== "wise.com" ||
+    url.username ||
+    url.password ||
+    !/^\/pay\/business\/[A-Za-z0-9_-]+\/?$/.test(url.pathname)
+  ) {
+    return null;
+  }
+  return url.toString();
+}
+
 function parseServerEnv(schema, source) {
   const result = schema.safeParse(source);
   if (!result.success) {

@@ -37,7 +37,7 @@ test("composes hosted verification from private provider adapters", () => {
 test("composes verification status without payment-provider credentials", () => {
   const service = createVerificationStatusRuntime({
     client: { rpc: vi.fn() },
-    checkoutAvailable: false
+    wisePaymentUrl: "https://wise.com/pay/business/furqanm135"
   });
 
   expect(service).toEqual({ getStatus: expect.any(Function) });

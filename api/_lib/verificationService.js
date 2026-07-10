@@ -67,7 +67,8 @@ function providerMatches(verification, provider) {
 export function createVerificationStatusService({
   repository,
   clock = { now: () => new Date() },
-  checkoutAvailable = true
+  checkoutAvailable = true,
+  payment = null
 }) {
   return {
     async getStatus({ verificationToken }) {
@@ -87,6 +88,7 @@ export function createVerificationStatusService({
       return {
         state,
         checkoutAvailable,
+        payment: payment ? { ...payment } : null,
         applicationReference: application.reference,
         candidateEmail: application.email,
         role: { title: application.role.title },

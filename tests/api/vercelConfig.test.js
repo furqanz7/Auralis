@@ -151,7 +151,7 @@ describe("Vercel private assessment routing", () => {
   test("runs fallback verification cancellation retry daily", async () => {
     const config = await readConfig();
 
-    expect(config.crons).toContainEqual({
+    expect(config.crons).not.toContainEqual({
       path: "/api/cron/verification-retries",
       schedule: "0 0 * * *"
     });
