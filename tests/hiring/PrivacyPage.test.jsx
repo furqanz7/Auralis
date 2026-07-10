@@ -9,7 +9,7 @@ describe("hiring privacy experience", () => {
   test("publishes the hiring data lifecycle and human-review safeguards", () => {
     render(
       <MemoryRouter>
-        <PrivacyPage client={{ requestPrivacyDeletion: vi.fn() }} />
+        <PrivacyPage />
       </MemoryRouter>
     );
 
@@ -20,7 +20,7 @@ describe("hiring privacy experience", () => {
     expect(screen.getByText(/no automated hiring decisions/i)).toBeVisible();
     expect(screen.getByText(/Auralis, located in Tbilisi, Georgia/i)).toBeVisible();
     expect(screen.getByText(/Supabase/i)).toBeVisible();
-    expect(screen.getByText(/Google Gmail/i)).toBeVisible();
+    expect(screen.getByText(/Resend/i)).toBeVisible();
     expect(screen.getByText(/Cloudflare Turnstile/i)).toBeVisible();
     expect(screen.getByText(/TBC.*hosted payment portal/i)).toBeVisible();
     expect(screen.getByText(/never receives or stores card details/i)).toBeVisible();
@@ -29,30 +29,19 @@ describe("hiring privacy experience", () => {
     ).toHaveAttribute("href", "mailto:auralis.careers@proton.me");
   });
 
-  test("returns a generic deletion-request confirmation", async () => {
-    const client = {
-      requestPrivacyDeletion: vi.fn(async () => ({ accepted: true }))
-    };
-    const user = userEvent.setup();
+  test("directs deletion requests to the private operations inbox", () => {
     render(
       <MemoryRouter>
-        <PrivacyPage client={client} />
+        <PrivacyPage />
       </MemoryRouter>
     );
 
-    await user.type(
-      screen.getByRole("textbox", { name: "Application email" }),
-      "nino@example.com"
-    );
-    await user.click(screen.getByRole("button", { name: "Request deletion link" }));
-
     expect(
-      await screen.findByText(/if an application matches that address/i)
-    ).toBeVisible();
-    expect(client.requestPrivacyDeletion).toHaveBeenCalledWith(
-      "nino@example.com"
+      screen.getByRole("link", { name: "Email deletion request" })
+    ).toHaveAttribute(
+      "href",
+      "mailto:auralis.careers@proton.me?subject=Application%20deletion%20request"
     );
-    expect(screen.getByText(/does not confirm whether an application exists/i)).toBeVisible();
   });
 
   test("does not delete when a private confirmation link is merely opened", async () => {

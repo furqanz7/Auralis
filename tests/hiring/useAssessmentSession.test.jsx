@@ -25,7 +25,7 @@ function started(overrides = {}) {
     role: { slug: "senior-ai-product-engineer", title: "Senior AI Product Engineer" },
     questions: [question()],
     startedAt: NOW.toISOString(),
-    deadlineAt: new Date(NOW.getTime() + 20 * 60 * 1000).toISOString(),
+    deadlineAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
     responseVersion: 0,
     responses: {},
     ...overrides

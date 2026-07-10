@@ -6,7 +6,7 @@ test("composes hosted verification from private provider adapters", () => {
   const service = createVerificationRuntime({
     env: {
       PUBLIC_SITE_URL: "https://auralis.studio",
-      HIRING_EMAIL_FROM: "Auralis Careers <auralis.careers@gmail.com>",
+      RESEND_FROM: "Auralis Hiring <onboarding@resend.dev>",
       HIRING_RECRUITER_EMAIL: "auralis.careers@proton.me",
       HIRING_TOKEN_SECRET: "assessment-secret-with-at-least-32-characters",
       TBC_BASE_URL: "https://api.tbcbank.ge",

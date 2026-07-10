@@ -5,7 +5,7 @@ function createFixture() {
   const send = vi.fn(async () => ({ data: { id: "email-id" }, error: null }));
   const adapter = createHiringEmailAdapter({
     emailClient: { emails: { send } },
-    from: "Auralis Careers <auralis.careers@gmail.com>",
+    from: "Auralis Hiring <onboarding@resend.dev>",
     recruiterEmail: "auralis.careers@proton.me",
     siteUrl: "https://auralis.studio"
   });

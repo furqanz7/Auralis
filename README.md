@@ -12,7 +12,7 @@ npm run test:e2e
 npm run build
 ```
 
-Use `.env.example` as the environment inventory. `HIRING_PROVIDER_MODE=test` selects deterministic in-memory providers locally and does not require live Supabase, Gmail, Turnstile, or TBC credentials. Vercel production rejects test mode; production must set `HIRING_PROVIDER_MODE=live`.
+Use `.env.example` as the environment inventory. `HIRING_PROVIDER_MODE=test` selects deterministic in-memory providers locally and does not require live Supabase, Resend, Turnstile, or TBC credentials. Vercel production rejects test mode; production must set `HIRING_PROVIDER_MODE=live`.
 
 The browser uses `VITE_TURNSTILE_SITE_KEY` and `VITE_TBC_CHECKOUT_HOST`. Secrets without the `VITE_` prefix are server-only and must never be exposed to the browser.
 
@@ -46,14 +46,14 @@ Run them against a dedicated project before issuing a campaign. Confirm that the
 
 ## Provider Setup
 
-### Gmail SMTP
+### Resend Internal Delivery
 
-The hiring sender is `Auralis Careers <auralis.careers@gmail.com>`. Every application notification is delivered to `auralis.careers@proton.me` with the candidate details, a private CV link, and a private assessment URL. Auralis sends the assessment URL manually after review; the system does not automatically email assessment invitations or reminders. Enable 2-Step Verification on the Gmail account, create a dedicated App Password for Auralis hiring, and store it only in `GMAIL_SMTP_APP_PASSWORD`. Never use or store the account's normal password. The server connects to `smtp.gmail.com` over TLS on port 465. Send test messages to external addresses and confirm delivery before launch.
+The sender is `Auralis Hiring <onboarding@resend.dev>`. Every application notification is delivered to `auralis.careers@proton.me` with the candidate details, a private CV link, and a private assessment URL. The Proton address must be the email address on the Resend account because Resend's test sender can only deliver to its account owner. Auralis sends the assessment URL manually after review; the system does not automatically email candidates, including reminders, verification updates, or deletion-confirmation links.
 
-After entering the App Password in the ignored `.env.local` file, verify the connection and send a test notification to the Proton inbox with:
+After entering a newly rotated Resend API key in the ignored `.env.local` file, verify delivery to the Proton inbox with:
 
 ```bash
-npm run gmail:verify
+npm run resend:verify
 ```
 
 ### Cloudflare Turnstile
@@ -76,14 +76,14 @@ The browser return is not authoritative. Only the callback plus a server-to-serv
 
 Set a random `CRON_SECRET` of at least 32 characters. Vercel sends it as `Authorization: Bearer <secret>`. The project schedules:
 
-- verification cancellation retries every five minutes;
+- fallback verification cancellation retries daily at 00:00 UTC;
 - hiring retention daily at 02:30 UTC.
 
 Use a Vercel plan that supports the configured cron frequency. Confirm successful invocations and alerts after deployment.
 
 ## Privacy Operations
 
-Application and CV deletion is due 180 days after the most recent hiring activity. Candidates can request an email-confirmed deletion link from `/privacy`. The link only opens the confirmation screen; deletion starts after the explicit confirmation button is pressed.
+Application and CV deletion is due 180 days after the most recent hiring activity. Candidates can request earlier deletion from `/privacy` by emailing `auralis.careers@proton.me` from the address used for the application. The private confirmation-link implementation remains available for previously issued links, but no new candidate email is sent while the project uses Resend's test sender.
 
 The privacy controller is identified as Auralis, Tbilisi, Georgia. Have qualified Georgian privacy counsel verify these supplied identity details and review the final privacy notice, independent-contractor terms, international-transfer wording, assessment process, and refundable verification disclosure before launch.
 
@@ -92,13 +92,13 @@ The privacy controller is identified as Auralis, Tbilisi, Georgia. Have qualifie
 - Set every live environment variable in `.env.example`; generate independent high-entropy secrets.
 - Confirm `HIRING_PROVIDER_MODE=live` and Vercel's `VERCEL_ENV=production`.
 - Apply and inspect all Supabase migrations and private storage settings.
-- Complete Gmail SMTP App Password configuration and delivery tests.
+- Complete Resend internal-delivery verification to `auralis.careers@proton.me`.
 - Complete Cloudflare Turnstile hostname and action tests.
 - Complete TBC merchant EUR preauthorization, callback, cancellation, duplicate-callback, and delayed-callback tests.
 - Verify Vercel Cron authentication, retry schedules, retention runs, and operational alerts.
 - Verify the published controller identity, Auralis, Tbilisi, Georgia, and obtain legal review.
 - Run `npm test`, `npm run test:e2e`, and `npm run build`.
-- Verify private application, assessment, verification, completion, privacy, and deletion-confirmation routes at desktop and mobile widths with no text overlap or horizontal overflow.
+- Verify private application, assessment, verification, completion, and privacy routes at desktop and mobile widths with no text overlap or horizontal overflow.
 - Confirm every application notification reaches `auralis.careers@proton.me` with a working CV link and assessment URL.
 - Confirm verification never changes score, eligibility, review order, or contractor selection.
 

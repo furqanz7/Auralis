@@ -39,7 +39,7 @@ function fixture({ applicationExists = true } = {}) {
     deletionAttemptCount: 1,
     role: { title: "Senior AI Product Engineer" }
   };
-  let request = null;
+  let request = { tokenHash: hashToken(TOKEN) };
   const repository = {
     createDeletionRequest: vi.fn(async (input) => {
       request = input;
@@ -61,9 +61,7 @@ function fixture({ applicationExists = true } = {}) {
       return { deleted: true };
     })
   };
-  const email = {
-    enqueueDeletionConfirmation: vi.fn(async () => ({ providerMessageId: "email-1" }))
-  };
+  const email = {};
   const service = createHiringPrivacyService({
     repository,
     storage,
@@ -75,7 +73,7 @@ function fixture({ applicationExists = true } = {}) {
 }
 
 describe("candidate deletion", () => {
-  test("returns the same generic response while emailing an existing applicant", async () => {
+  test("returns the same generic response without sending an external email", async () => {
     const existing = fixture();
     const missing = fixture({ applicationExists: false });
 
@@ -86,17 +84,8 @@ describe("candidate deletion", () => {
       missing.service.requestDeletion({ email: "nobody@example.com" })
     ).resolves.toEqual({ accepted: true });
 
-    expect(existing.repository.createDeletionRequest).toHaveBeenCalledWith({
-      email: "nino@example.com",
-      tokenHash: hashToken(TOKEN),
-      expiresAt: new Date("2026-07-11T12:00:00.000Z"),
-      now: NOW
-    });
-    expect(existing.email.enqueueDeletionConfirmation).toHaveBeenCalledWith({
-      application: existing.application,
-      deletionToken: TOKEN
-    });
-    expect(missing.email.enqueueDeletionConfirmation).not.toHaveBeenCalled();
+    expect(existing.repository.createDeletionRequest).not.toHaveBeenCalled();
+    expect(missing.repository.createDeletionRequest).not.toHaveBeenCalled();
     expect(existing.repository.finalizeApplicationDeletion).not.toHaveBeenCalled();
   });
 

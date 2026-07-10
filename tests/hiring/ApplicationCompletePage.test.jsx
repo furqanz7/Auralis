@@ -41,7 +41,7 @@ describe("ApplicationCompletePage", () => {
     expect(screen.getByText("Temporary authorization cancelled")).toBeVisible();
     expect(screen.getByText(/bank controls when.*disappears/i)).toBeVisible();
     expect(screen.getByText(/AUR-1/)).toBeVisible();
-    expect(screen.getByText(/nino@example.com/)).toBeVisible();
+    expect(screen.queryByText(/nino@example.com/)).not.toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(
       /score|passed|hired|job offer|priority/i
     );

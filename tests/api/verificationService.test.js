@@ -240,7 +240,7 @@ describe("verification service", () => {
     expect(fixture.payment.getPayment).toHaveBeenCalledWith("tpay-payment-1");
     expect(fixture.payment.cancelPayment).toHaveBeenCalledWith("tpay-payment-1");
     expect(fixture.application.lifecycleState).toBe("completed");
-    expect(fixture.state.candidateEmails).toHaveLength(1);
+    expect(fixture.state.candidateEmails).toHaveLength(0);
     expect(fixture.state.recruiterEmails).toHaveLength(1);
   });
 
@@ -272,7 +272,7 @@ describe("verification service", () => {
     await fixture.service.handleCallback({ providerPaymentId: "tpay-payment-1" });
 
     expect(fixture.payment.cancelPayment).toHaveBeenCalledTimes(1);
-    expect(fixture.email.enqueueVerificationCompleteCandidate).toHaveBeenCalledTimes(1);
+    expect(fixture.email.enqueueVerificationCompleteCandidate).not.toHaveBeenCalled();
     expect(fixture.email.enqueueVerificationCompleteRecruiter).toHaveBeenCalledTimes(1);
   });
 
@@ -310,7 +310,7 @@ describe("verification service", () => {
 
     expect(fixture.application.lifecycleState).toBe("completed");
     expect(fixture.payment.cancelPayment).toHaveBeenCalledTimes(2);
-    expect(fixture.state.candidateEmails).toHaveLength(1);
+    expect(fixture.state.candidateEmails).toHaveLength(0);
   });
 
   test("keeps an abandoned payment pending and the application reviewable", async () => {

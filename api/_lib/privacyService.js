@@ -1,6 +1,5 @@
 import { hashToken } from "./tokens.js";
 
-const CONFIRMATION_TTL_MS = 24 * 60 * 60 * 1000;
 const RETRY_BASE_MS = 60 * 60 * 1000;
 const RETRY_MAX_MS = 24 * 60 * 60 * 1000;
 
@@ -22,10 +21,6 @@ function deletionRetryAt(now, attemptNumber) {
 function deletionAttempt(application) {
   const attempt = Number(application?.deletionAttemptCount);
   return Number.isInteger(attempt) && attempt > 0 ? attempt : 1;
-}
-
-function normalizeEmail(email) {
-  return String(email ?? "").trim().toLowerCase();
 }
 
 export function createHiringPrivacyService({

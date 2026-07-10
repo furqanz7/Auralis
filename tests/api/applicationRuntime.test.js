@@ -12,7 +12,7 @@ test("composes the Phase 1 service from server-only provider adapters", () => {
       PUBLIC_SITE_URL: "https://auralis.studio",
       SUPABASE_CV_BUCKET: "hiring-cvs",
       TURNSTILE_SECRET_KEY: "turnstile-secret",
-      HIRING_EMAIL_FROM: "Auralis Careers <auralis.careers@gmail.com>",
+      RESEND_FROM: "Auralis Hiring <onboarding@resend.dev>",
       HIRING_RECRUITER_EMAIL: "auralis.careers@proton.me",
       HIRING_TOKEN_SECRET: "assessment-secret-with-at-least-32-characters"
     },

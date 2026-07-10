@@ -35,7 +35,7 @@ test("completes the private contractor path exactly once", async () => {
     runtime.providers.state.emails.filter(
       (message) => message.type === "verification_complete_candidate"
     )
-  ).toHaveLength(1);
+  ).toHaveLength(0);
   expect(emailTypesBeforePayment).not.toContain("assessment_invite");
   expect(
     runtime.providers.state.emails.filter(

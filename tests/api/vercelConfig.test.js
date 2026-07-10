@@ -99,12 +99,12 @@ describe("Vercel private assessment routing", () => {
     expect(headers["x-content-type-options"]).toBe("nosniff");
   });
 
-  test("retries verification cancellation every five minutes", async () => {
+  test("runs fallback verification cancellation retry daily", async () => {
     const config = await readConfig();
 
     expect(config.crons).toContainEqual({
       path: "/api/cron/verification-retries",
-      schedule: "*/5 * * * *"
+      schedule: "0 0 * * *"
     });
   });
 

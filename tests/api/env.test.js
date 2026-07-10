@@ -11,9 +11,8 @@ const validEnv = {
   SUPABASE_URL: "https://project-ref.supabase.co",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-secret",
   SUPABASE_CV_BUCKET: "hiring-cvs",
-  GMAIL_SMTP_USER: "auralis.careers@gmail.com",
-  GMAIL_SMTP_APP_PASSWORD: "sixteen-character-app-password",
-  HIRING_EMAIL_FROM: "Auralis Careers <auralis.careers@gmail.com>",
+  RESEND_API_KEY: "re_test_key",
+  RESEND_FROM: "Auralis Hiring <onboarding@resend.dev>",
   HIRING_RECRUITER_EMAIL: "auralis.careers@proton.me",
   TURNSTILE_SECRET_KEY: "turnstile-secret"
 };

@@ -28,7 +28,7 @@ describe("privacy infrastructure", () => {
       env: {
         PUBLIC_SITE_URL: "https://auralis.studio",
         SUPABASE_CV_BUCKET: "hiring-cvs",
-        HIRING_EMAIL_FROM: "Auralis Careers <auralis.careers@gmail.com>",
+        RESEND_FROM: "Auralis Hiring <onboarding@resend.dev>",
         HIRING_RECRUITER_EMAIL: "auralis.careers@proton.me"
       },
       client: {
