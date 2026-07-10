@@ -303,7 +303,7 @@ export function createDemoVerificationClient(state = "pending") {
         payment: {
           provider: "wise",
           mode: "manual",
-          url: "https://wise.com/pay/business/furqanm135?utm_source=open_link"
+          url: "https://wise.com/pay/r/nAx15LFiReIdtjc"
         }
       };
     }

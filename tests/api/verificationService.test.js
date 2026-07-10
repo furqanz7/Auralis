@@ -337,7 +337,7 @@ describe("verification service", () => {
       payment: {
         provider: "wise",
         mode: "manual",
-        url: "https://wise.com/pay/business/furqanm135"
+        url: "https://wise.com/pay/r/nAx15LFiReIdtjc"
       }
     });
 
@@ -350,7 +350,7 @@ describe("verification service", () => {
       payment: {
         provider: "wise",
         mode: "manual",
-        url: "https://wise.com/pay/business/furqanm135"
+        url: "https://wise.com/pay/r/nAx15LFiReIdtjc"
       }
     });
     expect(fixture.payment.createHostedSession).not.toHaveBeenCalled();

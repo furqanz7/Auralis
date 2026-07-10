@@ -87,13 +87,12 @@ describe("readServerEnv", () => {
     ).toBe(false);
   });
 
-  test("accepts only the configured Wise Business payment-link origin", () => {
+  test("accepts only supported Wise payment-link routes", () => {
     expect(
       readWisePaymentUrl({
-        WISE_PAYMENT_URL:
-          "https://wise.com/pay/business/furqanm135?utm_source=open_link"
+        WISE_PAYMENT_URL: "https://wise.com/pay/r/nAx15LFiReIdtjc"
       })
-    ).toBe("https://wise.com/pay/business/furqanm135?utm_source=open_link");
+    ).toBe("https://wise.com/pay/r/nAx15LFiReIdtjc");
     expect(
       readWisePaymentUrl({
         WISE_PAYMENT_URL: "https://wise.example/pay/business/furqanm135"
@@ -101,7 +100,12 @@ describe("readServerEnv", () => {
     ).toBeNull();
     expect(
       readWisePaymentUrl({
-        WISE_PAYMENT_URL: "http://wise.com/pay/business/furqanm135"
+        WISE_PAYMENT_URL: "http://wise.com/pay/r/nAx15LFiReIdtjc"
+      })
+    ).toBeNull();
+    expect(
+      readWisePaymentUrl({
+        WISE_PAYMENT_URL: "https://wise.com/pay/r/nAx15LFiReIdtjc/extra"
       })
     ).toBeNull();
   });

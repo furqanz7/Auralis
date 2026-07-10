@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import VerificationPage from "../../src/hiring/pages/VerificationPage.jsx";
 
 const WISE_PAYMENT_URL =
-  "https://wise.com/pay/business/furqanm135?utm_source=open_link";
+  "https://wise.com/pay/r/nAx15LFiReIdtjc";
 
 function client(paymentUrl = WISE_PAYMENT_URL) {
   return {
@@ -113,7 +113,7 @@ describe("VerificationPage", () => {
   });
 
   test("refuses a payment URL outside Wise's Business payment path", async () => {
-    renderPage(client("https://lookalike.example/pay/business/furqanm135"));
+    renderPage(client("https://lookalike.example/pay/r/nAx15LFiReIdtjc"));
 
     expect(
       await screen.findByRole("heading", { name: "One final step" })

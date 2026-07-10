@@ -27,7 +27,9 @@ function validateWisePaymentUrl(value) {
       url.hostname !== "wise.com" ||
       url.username ||
       url.password ||
-      !/^\/pay\/business\/[A-Za-z0-9_-]+\/?$/.test(url.pathname)
+      !/^\/pay\/(?:business\/[A-Za-z0-9_-]+|r\/[A-Za-z0-9_-]+)\/?$/.test(
+        url.pathname
+      )
     ) {
       throw new Error();
     }

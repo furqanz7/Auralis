@@ -112,7 +112,7 @@ export default function PrivacyPage() {
               Auralis makes no automated hiring decisions. Every CV is available for human review, and assessment results support rather than replace professional judgment. The optional payment verification does not change your score, eligibility, review order, or selection outcome.
             </p>
             <p>
-              The optional verification uses a manual EUR 2.99 payment through a Wise Business payment link. You choose EUR, enter the amount, and include your application reference in the payment description. Auralis matches the payment, and the refund is initiated manually. Refund timing varies by payment method and is not instant.
+              The optional verification uses a manual EUR 2.99 payment through a Wise payment link. You choose EUR, enter the amount, and include your application reference in the payment description. Auralis matches the payment, and the refund is initiated manually. Refund timing varies by payment method and is not instant.
             </p>
           </PolicySection>
 

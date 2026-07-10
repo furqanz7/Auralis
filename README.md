@@ -53,7 +53,7 @@ npm run resend:verify
 
 ### Wise Manual Payment
 
-`WISE_PAYMENT_URL` is the reusable Wise Business payment link shown only after a valid private verification token is loaded. The applicant must select EUR, enter 2.99, and place the application reference in Wise's Description field.
+`WISE_PAYMENT_URL` is the reusable Wise payment link shown only after a valid private verification token is loaded. The applicant must select EUR, enter 2.99, and place the application reference in Wise's Description field.
 
 This flow does not provide application-specific automatic confirmation or an immediate authorization release. Auralis reconciles the payment manually using the description and initiates a manual refund from Wise. Refund arrival depends on Wise and the original payment method and must not be described as instant. Payment verification never changes assessment results, eligibility, review order, or contractor selection.
 
