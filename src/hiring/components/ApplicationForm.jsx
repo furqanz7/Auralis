@@ -7,6 +7,7 @@ import {
 
 const STORAGE_KEY = "auralis:hiring:application";
 const NOOP = () => {};
+const EMPTY_ROLES = Object.freeze([]);
 const EMPTY_FORM = {
   roleSlug: "",
   fullName: "",
@@ -82,7 +83,7 @@ function errorMessage(code) {
 }
 
 export default function ApplicationForm({
-  roles: providedRoles = [],
+  roles: providedRoles = EMPTY_ROLES,
   role: fixedRole = null,
   campaign = null,
   client,
