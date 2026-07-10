@@ -11,6 +11,7 @@ function client(approvalUrl = "https://tpay.tbcbank.ge/checkout/payment-1") {
       applicationReference: "AUR-1",
       candidateEmail: "nino@example.com",
       role: { title: "Senior AI Product Engineer" },
+      checkoutAvailable: true,
       verification: { amountMinor: 299, currency: "EUR" }
     })),
     createVerificationSession: vi.fn(async () => ({ approvalUrl }))
@@ -94,5 +95,26 @@ describe("VerificationPage", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/could not be opened/i);
     expect(navigateExternal).not.toHaveBeenCalled();
+  });
+
+  test("keeps a valid application visible while hosted checkout is unavailable", async () => {
+    const api = client();
+    api.getVerificationStatus.mockResolvedValueOnce({
+      state: "pending",
+      applicationReference: "AUR-1",
+      candidateEmail: "nino@example.com",
+      role: { title: "Senior AI Product Engineer" },
+      checkoutAvailable: false,
+      verification: { amountMinor: 299, currency: "EUR" }
+    });
+    renderPage(api);
+
+    expect(
+      await screen.findByRole("heading", { name: "One final verification" })
+    ).toBeVisible();
+    expect(screen.getAllByText(/temporarily unavailable/i)).not.toHaveLength(0);
+    expect(
+      screen.getByRole("button", { name: "Payment portal unavailable" })
+    ).toBeDisabled();
   });
 });

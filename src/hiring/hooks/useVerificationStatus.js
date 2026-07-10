@@ -41,7 +41,12 @@ export function useVerificationStatus({
             ? "processing"
             : "pending";
         setState({ status, data, error: null, timedOut: false });
-        if (TERMINAL_STATES.has(status)) return;
+        if (
+          TERMINAL_STATES.has(status) ||
+          data.checkoutAvailable === false
+        ) {
+          return;
+        }
 
         const remaining = maxWaitMs - (Date.now() - startedAt);
         timer = window.setTimeout(poll, Math.max(1, Math.min(pollInterval, remaining)));

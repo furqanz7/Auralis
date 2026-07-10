@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  hasVerificationProviderConfig,
   readAssessmentEnv,
   readCronEnv,
   readServerEnv,
@@ -76,6 +77,13 @@ describe("readServerEnv", () => {
     expect(() =>
       readVerificationEnv({ ...verificationEnv, TBC_CLIENT_SECRET: "" })
     ).toThrow(/server environment/i);
+    expect(hasVerificationProviderConfig(verificationEnv)).toBe(true);
+    expect(
+      hasVerificationProviderConfig({
+        ...verificationEnv,
+        TBC_CLIENT_SECRET: ""
+      })
+    ).toBe(false);
   });
 
   test("allows deterministic providers locally without live service secrets", () => {

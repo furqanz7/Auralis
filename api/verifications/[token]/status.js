@@ -4,7 +4,9 @@ import {
   setPrivateHeaders
 } from "../../_lib/http.js";
 import { readVerificationToken } from "../../_lib/verificationHttp.js";
-import { getVerificationRuntimeService } from "../../_lib/verificationRuntime.js";
+import {
+  getVerificationStatusRuntimeService
+} from "../../_lib/verificationRuntime.js";
 
 export function createVerificationStatusHandler(service) {
   return async function verificationStatusHandler(request, response) {
@@ -22,8 +24,7 @@ export function createVerificationStatusHandler(service) {
 }
 
 export default async function handler(request, response) {
-  return createVerificationStatusHandler(getVerificationRuntimeService())(
-    request,
-    response
-  );
+  return createVerificationStatusHandler(
+    getVerificationStatusRuntimeService()
+  )(request, response);
 }

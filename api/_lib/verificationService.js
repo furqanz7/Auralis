@@ -64,6 +64,48 @@ function providerMatches(verification, provider) {
   );
 }
 
+export function createVerificationStatusService({
+  repository,
+  clock = { now: () => new Date() },
+  checkoutAvailable = true
+}) {
+  return {
+    async getStatus({ verificationToken }) {
+      let tokenHash;
+      try {
+        tokenHash = hashToken(verificationToken);
+      } catch {
+        fail("VERIFICATION_INVALID", 404);
+      }
+      const record = await repository.findByAccessTokenHash(
+        tokenHash,
+        clock.now()
+      );
+      if (!record) fail("VERIFICATION_INVALID", 404);
+      const { application, verification } = record;
+      const state = publicState(verification);
+      return {
+        state,
+        checkoutAvailable,
+        applicationReference: application.reference,
+        candidateEmail: application.email,
+        role: { title: application.role.title },
+        verification: {
+          amountMinor: VERIFICATION_PAYMENT.amountMinor,
+          currency: VERIFICATION_PAYMENT.currency,
+          authorization: state === "pending" ? "pending" : "confirmed",
+          release:
+            state === "completed"
+              ? "confirmed"
+              : state === "failed"
+                ? "attention_required"
+                : "processing"
+        }
+      };
+    }
+  };
+}
+
 export function createVerificationService({
   repository,
   payment,
@@ -75,6 +117,7 @@ export function createVerificationService({
   if (typeof returnTokenFactory !== "function") {
     throw new TypeError("Verification service requires a return token factory.");
   }
+  const statusService = createVerificationStatusService({ repository, clock });
 
   async function dispatchCompletion(verification) {
     await Promise.allSettled([
@@ -311,37 +354,6 @@ export function createVerificationService({
       return summary;
     },
 
-    async getStatus({ verificationToken }) {
-      let tokenHash;
-      try {
-        tokenHash = hashToken(verificationToken);
-      } catch {
-        fail("VERIFICATION_INVALID", 404);
-      }
-      const record = await repository.findByAccessTokenHash(
-        tokenHash,
-        clock.now()
-      );
-      if (!record) fail("VERIFICATION_INVALID", 404);
-      const { application, verification } = record;
-      const state = publicState(verification);
-      return {
-        state,
-        applicationReference: application.reference,
-        candidateEmail: application.email,
-        role: { title: application.role.title },
-        verification: {
-          amountMinor: VERIFICATION_PAYMENT.amountMinor,
-          currency: VERIFICATION_PAYMENT.currency,
-          authorization: state === "pending" ? "pending" : "confirmed",
-          release:
-            state === "completed"
-              ? "confirmed"
-              : state === "failed"
-                ? "attention_required"
-                : "processing"
-        }
-      };
-    }
+    getStatus: statusService.getStatus
   };
 }

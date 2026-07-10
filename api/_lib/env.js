@@ -49,6 +49,10 @@ const liveVerificationServerEnvSchema = liveAssessmentServerEnvSchema.extend({
 
 const testVerificationServerEnvSchema = testAssessmentServerEnvSchema;
 
+export function hasVerificationProviderConfig(source = process.env) {
+  return liveVerificationServerEnvSchema.safeParse(source).success;
+}
+
 function parseServerEnv(schema, source) {
   const result = schema.safeParse(source);
   if (!result.success) {

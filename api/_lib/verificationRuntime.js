@@ -4,9 +4,16 @@ import {
   getSupabaseAdmin
 } from "./adapters/supabase.js";
 import { createPaymentAdapter } from "./adapters/tbcPayment.js";
-import { readVerificationEnv } from "./env.js";
+import {
+  hasVerificationProviderConfig,
+  readAssessmentEnv,
+  readVerificationEnv
+} from "./env.js";
 import { createVerificationReturnTokenFactory } from "./tokens.js";
-import { createVerificationService } from "./verificationService.js";
+import {
+  createVerificationService,
+  createVerificationStatusService
+} from "./verificationService.js";
 import { getTestHiringRuntime } from "./testHiringRuntime.js";
 import { createLiveEmailClient } from "./liveEmailClient.js";
 
@@ -38,7 +45,15 @@ export function createVerificationRuntime({
   });
 }
 
+export function createVerificationStatusRuntime({ client, checkoutAvailable }) {
+  return createVerificationStatusService({
+    repository: createSupabaseVerificationRepository({ client }),
+    checkoutAvailable
+  });
+}
+
 let runtimeService;
+let statusRuntimeService;
 
 export function getVerificationRuntimeService() {
   if (!runtimeService) {
@@ -53,4 +68,18 @@ export function getVerificationRuntimeService() {
           });
   }
   return runtimeService;
+}
+
+export function getVerificationStatusRuntimeService() {
+  if (!statusRuntimeService) {
+    const env = readAssessmentEnv();
+    statusRuntimeService =
+      env.HIRING_PROVIDER_MODE === "test"
+        ? getTestHiringRuntime(env).verification
+        : createVerificationStatusRuntime({
+            client: getSupabaseAdmin(),
+            checkoutAvailable: hasVerificationProviderConfig()
+          });
+  }
+  return statusRuntimeService;
 }

@@ -1,5 +1,8 @@
 import { expect, test, vi } from "vitest";
-import { createVerificationRuntime } from "../../api/_lib/verificationRuntime.js";
+import {
+  createVerificationRuntime,
+  createVerificationStatusRuntime
+} from "../../api/_lib/verificationRuntime.js";
 
 test("composes hosted verification from private provider adapters", () => {
   const client = { rpc: vi.fn() };
@@ -29,4 +32,13 @@ test("composes hosted verification from private provider adapters", () => {
       retryDueCancellations: expect.any(Function)
     })
   );
+});
+
+test("composes verification status without payment-provider credentials", () => {
+  const service = createVerificationStatusRuntime({
+    client: { rpc: vi.fn() },
+    checkoutAvailable: false
+  });
+
+  expect(service).toEqual({ getStatus: expect.any(Function) });
 });

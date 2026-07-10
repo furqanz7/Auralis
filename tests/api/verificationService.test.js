@@ -1,7 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   VerificationDomainError,
-  createVerificationService
+  createVerificationService,
+  createVerificationStatusService
 } from "../../api/_lib/verificationService.js";
 import { hashToken } from "../../api/_lib/tokens.js";
 
@@ -325,6 +326,24 @@ describe("verification service", () => {
       candidateEmail: "nino@example.com"
     });
     expect(fixture.application.lifecycleState).toBe("verification_pending");
+  });
+
+  test("loads a valid verification while hosted checkout is not configured", async () => {
+    const fixture = createFixture();
+    const statusService = createVerificationStatusService({
+      repository: fixture.repository,
+      clock: { now: () => new Date(NOW) },
+      checkoutAvailable: false
+    });
+
+    await expect(
+      statusService.getStatus({ verificationToken: VERIFICATION_TOKEN })
+    ).resolves.toMatchObject({
+      state: "pending",
+      applicationReference: "AUR-1",
+      checkoutAvailable: false
+    });
+    expect(fixture.payment.createHostedSession).not.toHaveBeenCalled();
   });
 
   test("never changes assessment results or recruiter priority", async () => {

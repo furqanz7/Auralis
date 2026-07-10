@@ -142,6 +142,19 @@ export default function VerificationPage({
   const data = verification.data;
   const amount = data?.verification?.amountMinor === 299 ? "€2.99" : "€2.99";
   const processing = verification.status === "processing";
+  const checkoutAvailable = data?.checkoutAvailable !== false;
+  const verificationStatusLabel = processing
+    ? "Verification processing"
+    : checkoutAvailable
+      ? "Payment verification pending"
+      : "Payment portal unavailable";
+  const actionLabel = !checkoutAvailable
+    ? "Payment portal unavailable"
+    : actionState === "opening"
+      ? "Opening secure portal"
+      : processing
+        ? "Verification processing"
+        : "Continue to payment portal";
 
   return (
     <main className="hiring-page verification-page">
@@ -165,7 +178,7 @@ export default function VerificationPage({
               <h2>Application status</h2>
               <div><Check size={18} aria-hidden="true" /><span>CV received</span></div>
               <div><Check size={18} aria-hidden="true" /><span>Assessment complete</span></div>
-              <div className="is-pending"><Circle size={18} aria-hidden="true" /><span>{processing ? "Verification processing" : "Payment verification pending"}</span></div>
+              <div className="is-pending"><Circle size={18} aria-hidden="true" /><span>{verificationStatusLabel}</span></div>
             </div>
           </div>
           <div className="verification-overview-art" aria-hidden="true">
@@ -177,9 +190,19 @@ export default function VerificationPage({
           <div className="verification-portal-inner">
             <h2 id="portal-title">Secure verification portal</h2>
             <div className="verification-portal-copy">
-              <p>You will continue to our payment provider to authorize {amount}.</p>
-              <p>The provider handles payment details. Auralis never receives or stores them.</p>
-              <p>After verification, you will return here automatically.</p>
+              {checkoutAvailable ? (
+                <>
+                  <p>You will continue to our payment provider to authorize {amount}.</p>
+                  <p>The provider handles payment details. Auralis never receives or stores them.</p>
+                  <p>After verification, you will return here automatically.</p>
+                </>
+              ) : (
+                <>
+                  <p>The hosted payment portal is temporarily unavailable.</p>
+                  <p>Your application and assessment remain securely submitted.</p>
+                  <p>Human review is not affected by payment verification availability.</p>
+                </>
+              )}
             </div>
 
             <div className="verification-summary">
@@ -192,15 +215,28 @@ export default function VerificationPage({
             </div>
 
             <div className="verification-action-block">
-              <p><LockKeyhole size={22} aria-hidden="true" />Opens our secure payment provider</p>
-              {actionError ? <div className="verification-action-error" role="alert">{actionError}</div> : null}
+              <p>
+                <LockKeyhole size={22} aria-hidden="true" />
+                {checkoutAvailable
+                  ? "Opens our secure payment provider"
+                  : "Hosted provider setup required"}
+              </p>
+              {!checkoutAvailable ? (
+                <div className="verification-action-error" role="status">
+                  Payment verification is temporarily unavailable. Your application remains submitted and review is not affected.
+                </div>
+              ) : actionError ? (
+                <div className="verification-action-error" role="alert">
+                  {actionError}
+                </div>
+              ) : null}
               <button
                 className="verification-action"
                 type="button"
                 onClick={beginVerification}
-                disabled={actionState === "opening" || processing}
+                disabled={!checkoutAvailable || actionState === "opening" || processing}
               >
-                {actionState === "opening" ? "Opening secure portal" : processing ? "Verification processing" : "Continue to payment portal"}
+                {actionLabel}
                 <ArrowRight size={24} aria-hidden="true" />
               </button>
             </div>

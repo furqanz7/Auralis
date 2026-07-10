@@ -62,4 +62,26 @@ describe("useVerificationStatus", () => {
     expect(result.current.timedOut).toBe(true);
     expect(result.current.status).not.toBe("completed");
   });
+
+  test("does not poll repeatedly while hosted checkout is unavailable", async () => {
+    vi.useFakeTimers();
+    const client = {
+      getVerificationStatus: vi.fn(async () => ({
+        state: "pending",
+        checkoutAvailable: false
+      }))
+    };
+    const { result } = renderHook(() =>
+      useVerificationStatus({
+        token: "verification-token",
+        client,
+        pollInterval: 1000
+      })
+    );
+
+    await act(async () => Promise.resolve());
+    expect(result.current.status).toBe("pending");
+    await act(async () => vi.advanceTimersByTimeAsync(5000));
+    expect(client.getVerificationStatus).toHaveBeenCalledTimes(1);
+  });
 });
