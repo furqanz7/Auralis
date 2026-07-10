@@ -71,7 +71,7 @@ export function createApplicationService({
   tokenFactory = () => createOpaqueToken(32),
   assessmentTokenFactory,
   referenceFactory = () =>
-    `AUR-${createOpaqueToken(6).replace(/[-_]/g, "").slice(0, 8).toUpperCase()}`
+    `AUR-${createOpaqueToken(16).replace(/[-_]/g, "").slice(0, 8).toUpperCase()}`
 }) {
   const createAssessmentToken =
     assessmentTokenFactory ?? (() => tokenFactory());

@@ -19,7 +19,10 @@ const validPayload = {
   privacyAccepted: true
 };
 
-function createFixture({ assessmentTokenFactory } = {}) {
+function createFixture({
+  assessmentTokenFactory,
+  useDefaultReferenceFactory = false
+} = {}) {
   const state = {
     applications: [],
     recruiterEmails: [],
@@ -178,15 +181,19 @@ function createFixture({ assessmentTokenFactory } = {}) {
   };
 
   let tokenSequence = 0;
-  const service = createApplicationService({
+  const serviceOptions = {
     repository,
     storage,
     email,
     clock: { now: () => new Date(NOW) },
     tokenFactory: () => `opaque-token-${++tokenSequence}-with-enough-entropy`,
-    assessmentTokenFactory,
-    referenceFactory: () => `AUR-${state.applications.length + 1}`
-  });
+    assessmentTokenFactory
+  };
+  if (!useDefaultReferenceFactory) {
+    serviceOptions.referenceFactory = () =>
+      `AUR-${state.applications.length + 1}`;
+  }
+  const service = createApplicationService(serviceOptions);
 
   return { campaign, directCampaign, email, repository, service, state, storage };
 }
@@ -280,6 +287,14 @@ describe("application service", () => {
     expect(state.tokens[0].expiresAt).toEqual(
       new Date("2026-07-24T12:00:00.000Z")
     );
+  });
+
+  test("generates a production application reference with the default factory", async () => {
+    const { service } = createFixture({ useDefaultReferenceFactory: true });
+
+    await expect(submit(service)).resolves.toEqual({
+      applicationReference: expect.stringMatching(/^AUR-[A-Z0-9]{8}$/)
+    });
   });
 
   test("uses the reproducible assessment token for storage and manual recruiter delivery", async () => {
