@@ -30,23 +30,23 @@
     },
     {
       "source": "/apply/:path*",
-      "destination": "/index.html"
+      "destination": "/"
     },
     {
       "source": "/assessment/:path*",
-      "destination": "/index.html"
+      "destination": "/"
     },
     {
       "source": "/verify/:path*",
-      "destination": "/index.html"
+      "destination": "/"
     },
     {
       "source": "/application/:path*",
-      "destination": "/index.html"
+      "destination": "/"
     },
     {
       "source": "/privacy/delete/:path*",
-      "destination": "/privacy.html"
+      "destination": "/privacy"
     }
   ],
   "headers": [

@@ -34,7 +34,7 @@ describe("Vercel private assessment routing", () => {
 
     expect(config.rewrites).toContainEqual({
       source: "/apply/:path*",
-      destination: "/index.html"
+      destination: "/"
     });
   });
 
@@ -60,7 +60,7 @@ describe("Vercel private assessment routing", () => {
 
     expect(config.rewrites).toContainEqual({
       source: "/assessment/:path*",
-      destination: "/index.html"
+      destination: "/"
     });
   });
 
@@ -125,8 +125,8 @@ describe("Vercel private assessment routing", () => {
 
     expect(config.rewrites).toEqual(
       expect.arrayContaining([
-        { source: "/verify/:path*", destination: "/index.html" },
-        { source: "/application/:path*", destination: "/index.html" }
+        { source: "/verify/:path*", destination: "/" },
+        { source: "/application/:path*", destination: "/" }
       ])
     );
   });
@@ -161,7 +161,7 @@ describe("Vercel private assessment routing", () => {
 
     expect(config.rewrites).toContainEqual({
       source: "/privacy/delete/:path*",
-      destination: "/privacy.html"
+      destination: "/privacy"
     });
     for (const source of ["/privacy/delete/(.*)", "/api/privacy/(.*)"]) {
       const headers = headerMap(
