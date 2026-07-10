@@ -307,7 +307,6 @@ body.hiring-active .route-veil {
 
 .hiring-field small,
 .hiring-file-error,
-.hiring-security-error,
 .hiring-consent-error {
   display: block;
   margin-top: 7px;
@@ -378,16 +377,13 @@ body.hiring-active .route-veil {
   white-space: nowrap;
 }
 
-.hiring-turnstile {
-  width: min(100%, 420px);
-  min-height: 65px;
-  margin-top: 24px;
-}
-
-.hiring-security-unavailable {
-  margin: 24px 0 0;
-  color: #ff6d63;
-  font-size: 0.75rem;
+.hiring-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .hiring-form-footer {

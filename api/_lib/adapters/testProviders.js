@@ -109,12 +109,6 @@ export function createTestHiringProviders({
     }
   };
 
-  const turnstile = {
-    async verify() {
-      return { success: true };
-    }
-  };
-
   const applicationRepository = {
     async findCampaign({ roleSlug, tokenHash, now: at }) {
       return roleSlug === role.slug &&
@@ -546,7 +540,6 @@ export function createTestHiringProviders({
     storage,
     email,
     payment,
-    turnstile,
     controls,
     repositories: {
       application: applicationRepository,

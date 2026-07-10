@@ -12,8 +12,7 @@ const livePhaseOneServerEnvSchema = providerSchema.extend({
   SUPABASE_CV_BUCKET: z.string().min(1).default("hiring-cvs"),
   RESEND_API_KEY: z.string().min(1),
   RESEND_FROM: z.string().min(1),
-  HIRING_RECRUITER_EMAIL: z.string().email(),
-  TURNSTILE_SECRET_KEY: z.string().min(1)
+  HIRING_RECRUITER_EMAIL: z.string().email()
 });
 
 const testPhaseOneServerEnvSchema = providerSchema.extend({

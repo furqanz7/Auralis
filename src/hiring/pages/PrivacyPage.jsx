@@ -118,7 +118,7 @@ export default function PrivacyPage() {
 
           <PolicySection id="providers" number="04" title="Providers and international handling">
             <p>
-              Auralis uses vetted service providers to operate this experience: Supabase for private application records and CV storage, Resend for internal operational notifications, Cloudflare Turnstile for abuse prevention, Vercel for website and serverless infrastructure, and TBC through its hosted payment portal for verification.
+              Auralis uses vetted service providers to operate this experience: Supabase for private application records and CV storage, Resend for internal operational notifications, Vercel for website and serverless infrastructure, and TBC through its hosted payment portal for verification.
             </p>
             <p>
               TBC and its payment environment handle payment credentials. Auralis never receives or stores card details; it keeps only the minimum provider reference and verification state needed to confirm and cancel the authorization.

@@ -13,7 +13,8 @@ const uploadRequestSchema = z.object({
   email: z.string().trim().email().max(254),
   fileName: z.string().min(1).max(255).regex(/\.pdf$/i),
   mimeType: z.literal("application/pdf"),
-  size: z.number().int().positive().max(APPLICATION_MAX_CV_BYTES)
+  size: z.number().int().positive().max(APPLICATION_MAX_CV_BYTES),
+  website: z.string().trim().max(0).default("")
 });
 
 export function createUploadUrlHandler(service) {

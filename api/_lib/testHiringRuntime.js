@@ -32,7 +32,6 @@ export function createTestHiringRuntime({
     repository: providers.repositories.application,
     storage: providers.storage,
     email: providers.email,
-    turnstile: providers.turnstile,
     recruiterEmail: "auralis.careers@proton.me",
     clock,
     tokenFactory: () => providers.controls.nextToken(),

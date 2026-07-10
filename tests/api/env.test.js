@@ -13,8 +13,7 @@ const validEnv = {
   SUPABASE_CV_BUCKET: "hiring-cvs",
   RESEND_API_KEY: "re_test_key",
   RESEND_FROM: "Auralis Hiring <onboarding@resend.dev>",
-  HIRING_RECRUITER_EMAIL: "auralis.careers@proton.me",
-  TURNSTILE_SECRET_KEY: "turnstile-secret"
+  HIRING_RECRUITER_EMAIL: "auralis.careers@proton.me"
 };
 
 describe("readServerEnv", () => {

@@ -7,15 +7,13 @@ import {
   getSupabaseAdmin
 } from "./adapters/supabase.js";
 import { createHiringEmailAdapter } from "./adapters/hiringEmail.js";
-import { createTurnstileAdapter } from "./adapters/turnstile.js";
 import { createLiveEmailClient } from "./liveEmailClient.js";
 import { getTestHiringRuntime } from "./testHiringRuntime.js";
 
 export function createApplicationRuntime({
   env,
   client,
-  emailClient,
-  fetchImpl = fetch
+  emailClient
 }) {
   return createApplicationService({
     repository: createSupabaseApplicationRepository({ client }),
@@ -32,13 +30,7 @@ export function createApplicationRuntime({
     recruiterEmail: env.HIRING_RECRUITER_EMAIL,
     assessmentTokenFactory: createAssessmentTokenFactory(
       env.HIRING_TOKEN_SECRET
-    ),
-    turnstile: createTurnstileAdapter({
-      fetchImpl,
-      secretKey: env.TURNSTILE_SECRET_KEY,
-      expectedHostname: new URL(env.PUBLIC_SITE_URL).hostname,
-      expectedAction: "hiring_application"
-    })
+    )
   });
 }
 

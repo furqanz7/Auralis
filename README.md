@@ -12,9 +12,9 @@ npm run test:e2e
 npm run build
 ```
 
-Use `.env.example` as the environment inventory. `HIRING_PROVIDER_MODE=test` selects deterministic in-memory providers locally and does not require live Supabase, Resend, Turnstile, or TBC credentials. Vercel production rejects test mode; production must set `HIRING_PROVIDER_MODE=live`.
+Use `.env.example` as the environment inventory. `HIRING_PROVIDER_MODE=test` selects deterministic in-memory providers locally and does not require live Supabase, Resend, or TBC credentials. Vercel production rejects test mode; production must set `HIRING_PROVIDER_MODE=live`.
 
-The browser uses `VITE_TURNSTILE_SITE_KEY` and `VITE_TBC_CHECKOUT_HOST`. Secrets without the `VITE_` prefix are server-only and must never be exposed to the browser.
+The browser uses `VITE_TBC_CHECKOUT_HOST`. Secrets without the `VITE_` prefix are server-only and must never be exposed to the browser.
 
 ## Private Campaigns
 
@@ -56,10 +56,6 @@ After entering a newly rotated Resend API key in the ignored `.env.local` file, 
 npm run resend:verify
 ```
 
-### Cloudflare Turnstile
-
-Create a Turnstile widget for `auralis.studio`. Set `VITE_TURNSTILE_SITE_KEY` in the browser environment and `TURNSTILE_SECRET_KEY` on the server. The expected action is `hiring_application`; production hostname verification must remain enabled.
-
 ### TBC Merchant
 
 Obtain a TBC merchant account with EUR payments and preauthorization/cancellation enabled. Confirm that the TBC merchant configuration supports EUR 2.99, `preAuth: true`, and immediate full cancellation without capture.
@@ -67,7 +63,7 @@ Obtain a TBC merchant account with EUR payments and preauthorization/cancellatio
 Set the TBC API key, client ID, client secret, API base URL, and exact checkout hostname. Register this server callback with TBC:
 
 ```text
-https://auralis.studio/api/payments/tbc/callback
+https://auralis-nine.vercel.app/api/payments/tbc/callback
 ```
 
 The browser return is not authoritative. Only the callback plus a server-to-server provider lookup may complete verification. Auralis does not collect or store card data.
@@ -93,7 +89,7 @@ The privacy controller is identified as Auralis, Tbilisi, Georgia. Have qualifie
 - Confirm `HIRING_PROVIDER_MODE=live` and Vercel's `VERCEL_ENV=production`.
 - Apply and inspect all Supabase migrations and private storage settings.
 - Complete Resend internal-delivery verification to `auralis.careers@proton.me`.
-- Complete Cloudflare Turnstile hostname and action tests.
+- Confirm the hidden application bot-trap rejects populated automated submissions without affecting legitimate applicants.
 - Complete TBC merchant EUR preauthorization, callback, cancellation, duplicate-callback, and delayed-callback tests.
 - Verify Vercel Cron authentication, retry schedules, retention runs, and operational alerts.
 - Verify the published controller identity, Auralis, Tbilisi, Georgia, and obtain legal review.

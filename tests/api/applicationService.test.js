@@ -19,7 +19,7 @@ const validPayload = {
   privacyAccepted: true
 };
 
-function createFixture({ turnstileSucceeds = true, assessmentTokenFactory } = {}) {
+function createFixture({ assessmentTokenFactory } = {}) {
   const state = {
     applications: [],
     recruiterEmails: [],
@@ -156,26 +156,18 @@ function createFixture({ turnstileSucceeds = true, assessmentTokenFactory } = {}
     })
   };
 
-  const turnstile = {
-    verify: vi.fn(async () => {
-      if (!turnstileSucceeds) throw new Error("siteverify rejected token");
-      return { success: true };
-    })
-  };
-
   let tokenSequence = 0;
   const service = createApplicationService({
     repository,
     storage,
     email,
-    turnstile,
     clock: { now: () => new Date(NOW) },
     tokenFactory: () => `opaque-token-${++tokenSequence}-with-enough-entropy`,
     assessmentTokenFactory,
     referenceFactory: () => `AUR-${state.applications.length + 1}`
   });
 
-  return { campaign, email, repository, service, state, storage, turnstile };
+  return { campaign, email, repository, service, state, storage };
 }
 
 async function submit(service, overrides = {}) {
@@ -184,7 +176,6 @@ async function submit(service, overrides = {}) {
     campaignToken: "campaign-token",
     roleSlug: "senior-ai-product-engineer",
     payload: validPayload,
-    turnstileToken: "turnstile-token",
     ...overrides
   });
 }
@@ -219,15 +210,6 @@ describe("application service", () => {
     expect(state.uploadRequests).toHaveLength(0);
   });
 
-  test("maps a failed abuse check without creating an application", async () => {
-    const { service, state } = createFixture({ turnstileSucceeds: false });
-
-    await expect(submit(service)).rejects.toMatchObject({
-      code: "ABUSE_CHECK_FAILED"
-    });
-    expect(state.applications).toHaveLength(0);
-  });
-
   test("stores one application and sends its details only to the recruiter", async () => {
     const { service, state } = createFixture();
 
@@ -255,7 +237,7 @@ describe("application service", () => {
   });
 
   test("reuses an idempotent submission without duplicate email", async () => {
-    const { service, state, turnstile } = createFixture();
+    const { service, state } = createFixture();
 
     const first = await submit(service);
     const second = await submit(service);
@@ -263,7 +245,6 @@ describe("application service", () => {
     expect(second).toEqual(first);
     expect(state.applications).toHaveLength(1);
     expect(state.recruiterEmails).toHaveLength(1);
-    expect(turnstile.verify).toHaveBeenCalledTimes(1);
   });
 
   test("reuses the same normalized email, role, and campaign within 30 days", async () => {

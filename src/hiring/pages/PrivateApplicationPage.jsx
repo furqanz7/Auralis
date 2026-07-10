@@ -1,8 +1,7 @@
 import { ArrowLeft, Check, CircleAlert } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import ApplicationForm from "../components/ApplicationForm.jsx";
-import TurnstileWidget from "../components/TurnstileWidget.jsx";
 import { createDemoHiringClient, hiringClient } from "../api/hiringClient.js";
 
 const ROLE_COPY = {
@@ -72,10 +71,7 @@ function ApplicationState({ title, children, icon = "alert" }) {
   );
 }
 
-export default function PrivateApplicationPage({
-  client,
-  turnstileToken: suppliedTurnstileToken
-}) {
+export default function PrivateApplicationPage({ client }) {
   const { roleSlug, campaignToken } = useParams();
   const isDemo = import.meta.env.DEV && campaignToken === "demo-campaign";
   const activeClient = useMemo(
@@ -83,9 +79,6 @@ export default function PrivateApplicationPage({
     [client, isDemo]
   );
   const [state, setState] = useState({ status: "loading" });
-  const [securityToken, setSecurityToken] = useState(
-    suppliedTurnstileToken ?? (isDemo ? "demo-turnstile-token" : "")
-  );
 
   useEffect(() => {
     document.body.classList.add("hiring-active");
@@ -118,8 +111,6 @@ export default function PrivateApplicationPage({
       active = false;
     };
   }, [activeClient, campaignToken, roleSlug]);
-
-  const receiveToken = useCallback((token) => setSecurityToken(token), []);
 
   if (state.status === "unavailable") {
     return (
@@ -157,21 +148,6 @@ export default function PrivateApplicationPage({
               role={state.campaign.role}
               campaign={state.campaign}
               client={activeClient}
-              turnstileToken={securityToken}
-              securityControl={
-                !isDemo && !suppliedTurnstileToken ? (
-                  import.meta.env.VITE_TURNSTILE_SITE_KEY ? (
-                    <TurnstileWidget
-                      siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                      onToken={receiveToken}
-                    />
-                  ) : (
-                    <p className="hiring-security-unavailable" role="status">
-                      Security verification is temporarily unavailable.
-                    </p>
-                  )
-                ) : null
-              }
               onSubmitted={(result) => setState({ status: "submitted", result })}
             />
           </section>

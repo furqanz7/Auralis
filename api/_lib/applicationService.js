@@ -61,7 +61,6 @@ export function createApplicationService({
   repository,
   storage,
   email,
-  turnstile,
   recruiterEmail = "auralis.careers@proton.me",
   clock = { now: () => new Date() },
   tokenFactory = () => createOpaqueToken(32),
@@ -120,9 +119,7 @@ export function createApplicationService({
       idempotencyKey,
       campaignToken,
       roleSlug,
-      payload,
-      turnstileToken,
-      remoteIp
+      payload
     }) {
       if (typeof idempotencyKey !== "string" || idempotencyKey.length < 8) {
         fail("IDEMPOTENCY_KEY_REQUIRED", 400);
@@ -135,18 +132,6 @@ export function createApplicationService({
       if (!parsed.success) fail("INVALID_APPLICATION", 422);
 
       const campaign = await findCampaign({ roleSlug, campaignToken });
-
-      try {
-        const abuseResult = await turnstile.verify({
-          token: turnstileToken,
-          remoteIp,
-          idempotencyKey
-        });
-        if (!abuseResult?.success) fail("ABUSE_CHECK_FAILED", 403);
-      } catch (error) {
-        if (error instanceof ApplicationDomainError) throw error;
-        fail("ABUSE_CHECK_FAILED", 403);
-      }
 
       const confirmedCv = await storage.confirmObject(parsed.data.cvObjectKey);
       const cvBelongsToCampaign = parsed.data.cvObjectKey.startsWith(`${campaign.id}/`);

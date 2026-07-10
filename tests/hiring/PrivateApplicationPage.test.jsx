@@ -12,12 +12,7 @@ function renderPage(client) {
       <Routes>
         <Route
           path="/apply/:roleSlug/:campaignToken"
-          element={
-            <PrivateApplicationPage
-              client={client}
-              turnstileToken="test-turnstile-token"
-            />
-          }
+          element={<PrivateApplicationPage client={client} />}
         />
       </Routes>
     </MemoryRouter>
@@ -46,6 +41,7 @@ describe("PrivateApplicationPage", () => {
       "senior-ai-product-engineer",
       "private-token"
     );
+    expect(screen.queryByText(/security verification/i)).not.toBeInTheDocument();
   });
 
   test("shows one generic unavailable state", async () => {

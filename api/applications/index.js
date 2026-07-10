@@ -2,7 +2,6 @@ import { z } from "zod";
 import { applicationSchema } from "../../shared/hiring/applicationSchema.js";
 import {
   getHeader,
-  getRemoteIp,
   readJsonBody,
   requireMethod,
   sendHttpError,
@@ -13,7 +12,7 @@ import { getApplicationRuntimeService } from "../_lib/applicationRuntime.js";
 const applicationRequestSchema = z.object({
   roleSlug: z.string().min(1).max(120),
   campaignToken: z.string().min(16).max(512),
-  turnstileToken: z.string().min(1).max(2048),
+  website: z.string().trim().max(0).default(""),
   payload: applicationSchema
 });
 
@@ -43,8 +42,7 @@ export function createApplicationHandler(service) {
 
       const result = await service.submitApplication({
         ...input.data,
-        idempotencyKey,
-        remoteIp: getRemoteIp(request)
+        idempotencyKey
       });
       return response.status(201).json(result);
     } catch (error) {

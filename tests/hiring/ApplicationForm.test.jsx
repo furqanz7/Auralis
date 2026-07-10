@@ -54,7 +54,6 @@ describe("ApplicationForm", () => {
         role={designRole}
         campaign={campaign}
         client={createClient()}
-        turnstileToken="test-turnstile-token"
       />
     );
 
@@ -74,7 +73,6 @@ describe("ApplicationForm", () => {
         role={designRole}
         campaign={campaign}
         client={client}
-        turnstileToken="test-turnstile-token"
       />
     );
     const file = new File(["resume"], "resume.docx", {
@@ -94,7 +92,6 @@ describe("ApplicationForm", () => {
         role={designRole}
         campaign={campaign}
         client={createClient()}
-        turnstileToken="test-turnstile-token"
       />
     );
     const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "resume.pdf", {
@@ -114,7 +111,6 @@ describe("ApplicationForm", () => {
         role={designRole}
         campaign={campaign}
         client={client}
-        turnstileToken="test-turnstile-token"
       />
     );
     await fillForm(user, { includeProfile: false });
@@ -139,7 +135,6 @@ describe("ApplicationForm", () => {
         role={designRole}
         campaign={campaign}
         client={client}
-        turnstileToken="test-turnstile-token"
       />
     );
     await fillForm(user);
@@ -160,7 +155,6 @@ describe("ApplicationForm", () => {
         role={designRole}
         campaign={campaign}
         client={client}
-        turnstileToken="test-turnstile-token"
       />
     );
     await fillForm(user);
@@ -182,7 +176,6 @@ describe("ApplicationForm", () => {
         campaign={campaign}
         client={client}
         onSubmitted={onSubmitted}
-        turnstileToken="test-turnstile-token"
       />
     );
     await fillForm(user);
@@ -196,5 +189,32 @@ describe("ApplicationForm", () => {
       )
     );
     expect(sessionStorage.getItem("auralis:hiring:application")).toBeNull();
+  });
+
+  test("submits an empty hidden website field for server-side bot screening", async () => {
+    const user = userEvent.setup();
+    const client = createClient();
+    const { container } = render(
+      <ApplicationForm
+        role={designRole}
+        campaign={campaign}
+        client={client}
+      />
+    );
+    const honeypot = container.querySelector('input[name="website"]');
+
+    expect(honeypot).toHaveAttribute("tabindex", "-1");
+    expect(honeypot).toHaveAttribute("autocomplete", "off");
+    await fillForm(user);
+    await user.click(screen.getByRole("button", { name: "Continue to review" }));
+
+    await waitFor(() => expect(client.submitApplication).toHaveBeenCalled());
+    expect(client.createUploadUrl).toHaveBeenCalledWith(
+      expect.objectContaining({ website: "" })
+    );
+    expect(client.submitApplication).toHaveBeenCalledWith(
+      expect.objectContaining({ website: "" }),
+      expect.any(String)
+    );
   });
 });

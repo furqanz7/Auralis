@@ -21,7 +21,7 @@ describe("hiring privacy experience", () => {
     expect(screen.getByText(/Auralis, located in Tbilisi, Georgia/i)).toBeVisible();
     expect(screen.getByText(/Supabase/i)).toBeVisible();
     expect(screen.getByText(/Resend/i)).toBeVisible();
-    expect(screen.getByText(/Cloudflare Turnstile/i)).toBeVisible();
+    expect(screen.queryByText(/Cloudflare Turnstile/i)).not.toBeInTheDocument();
     expect(screen.getByText(/TBC.*hosted payment portal/i)).toBeVisible();
     expect(screen.getByText(/never receives or stores card details/i)).toBeVisible();
     expect(

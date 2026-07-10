@@ -104,7 +104,8 @@ describe("application handlers", () => {
       email: "nino@example.com",
       fileName: "nino-cv.pdf",
       mimeType: "application/pdf",
-      size: 2048
+      size: 2048,
+      website: ""
     };
 
     await handler(request({ body }), response);
@@ -148,7 +149,7 @@ describe("application handlers", () => {
         body: {
           roleSlug: "senior-ai-product-engineer",
           campaignToken: "private-campaign-token",
-          turnstileToken: "turnstile-token",
+          website: "",
           payload: validPayload
         }
       }),
@@ -176,7 +177,7 @@ describe("application handlers", () => {
         body: {
           roleSlug: "senior-ai-product-engineer",
           campaignToken: "private-campaign-token",
-          turnstileToken: "turnstile-token",
+          website: "",
           payload: validPayload
         }
       }),
@@ -187,6 +188,56 @@ describe("application handlers", () => {
     expect(response.body).toEqual({
       error: { code: "CAMPAIGN_UNAVAILABLE" }
     });
+  });
+
+  test("rejects a filled bot-trap field before signing a CV upload", async () => {
+    const service = { createUploadUrl: vi.fn() };
+    const handler = createUploadUrlHandler(service);
+    const response = createResponse();
+
+    await handler(
+      request({
+        body: {
+          campaignId: "550e8400-e29b-41d4-a716-446655440000",
+          email: "bot@example.com",
+          fileName: "cv.pdf",
+          mimeType: "application/pdf",
+          size: 2048,
+          website: "https://spam.example"
+        }
+      }),
+      response
+    );
+
+    expect(response.statusCode).toBe(422);
+    expect(response.body).toEqual({ error: { code: "INVALID_CV" } });
+    expect(service.createUploadUrl).not.toHaveBeenCalled();
+  });
+
+  test("rejects a filled bot-trap field before creating an application", async () => {
+    const service = { submitApplication: vi.fn() };
+    const handler = createApplicationHandler(service);
+    const response = createResponse();
+
+    await handler(
+      request({
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": "submission-123"
+        },
+        body: {
+          roleSlug: "senior-ai-product-engineer",
+          campaignToken: "private-campaign-token",
+          website: "https://spam.example",
+          payload: validPayload
+        }
+      }),
+      response
+    );
+
+    expect(response.statusCode).toBe(422);
+    expect(response.body).toEqual({ error: { code: "INVALID_APPLICATION" } });
+    expect(service.submitApplication).not.toHaveBeenCalled();
   });
 
   test("redirects only to the configured HTTPS Supabase storage host", async () => {

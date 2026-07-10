@@ -30,9 +30,7 @@ export async function advanceToVerification(runtime) {
       cvMimeType: "application/pdf",
       cvSize: 2048,
       privacyAccepted: true
-    },
-    turnstileToken: "test-turnstile-token",
-    remoteIp: "127.0.0.1"
+    }
   });
 
   const recruiterNotification = runtime.providers.state.emails.find(

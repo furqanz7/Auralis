@@ -70,7 +70,6 @@ function errorMessage(code) {
   const messages = {
     CAMPAIGN_UNAVAILABLE:
       "This private application link is no longer available. Request a current link from Auralis.",
-    ABUSE_CHECK_FAILED: "The security check expired. Complete it again and retry.",
     CV_UPLOAD_FAILED: "The CV could not be uploaded. Your other details are still here.",
     INVALID_CV: "The uploaded CV could not be confirmed. Choose the PDF again.",
     INVALID_APPLICATION: "Review the marked fields and try again."
@@ -82,15 +81,14 @@ export default function ApplicationForm({
   role,
   campaign,
   client,
-  onSubmitted = () => {},
-  turnstileToken,
-  securityControl = null
+  onSubmitted = () => {}
 }) {
   const formId = useId();
   const errorRef = useRef(null);
   const idempotencyKey = useRef(null);
   const [fields, setFields] = useState(readStoredFields);
   const [cvFile, setCvFile] = useState(null);
+  const [website, setWebsite] = useState("");
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("editing");
   const [formError, setFormError] = useState("");
@@ -146,7 +144,6 @@ export default function ApplicationForm({
     if (!fields.privacyAccepted) {
       next.privacyAccepted = "Accept the privacy notice to continue.";
     }
-    if (!turnstileToken) next.security = "Complete the security verification.";
     return next;
   }
 
@@ -172,7 +169,8 @@ export default function ApplicationForm({
         email: fields.email.trim().toLowerCase(),
         fileName: cvFile.name,
         mimeType: cvFile.type,
-        size: cvFile.size
+        size: cvFile.size,
+        website
       });
       await client.uploadCv(upload, cvFile);
 
@@ -181,7 +179,7 @@ export default function ApplicationForm({
         {
           roleSlug: role.slug,
           campaignToken: campaign.token,
-          turnstileToken,
+          website,
           payload: {
             fullName: fields.fullName.trim(),
             email: fields.email.trim().toLowerCase(),
@@ -216,6 +214,15 @@ export default function ApplicationForm({
 
   return (
     <form className="hiring-form" onSubmit={handleSubmit} noValidate>
+      <input
+        className="hiring-honeypot"
+        name="website"
+        value={website}
+        onChange={(event) => setWebsite(event.target.value)}
+        autoComplete="off"
+        tabIndex="-1"
+        aria-hidden="true"
+      />
       {formError ? (
         <div className="hiring-error-summary" role="alert" tabIndex="-1" ref={errorRef}>
           <span>Application not sent</span>
@@ -348,9 +355,6 @@ export default function ApplicationForm({
         />
         {errors.cv ? <small className="hiring-file-error">{errors.cv}</small> : null}
       </fieldset>
-
-      {securityControl}
-      {errors.security ? <small className="hiring-security-error">{errors.security}</small> : null}
 
       <div className="hiring-form-footer">
         <label className="hiring-consent">
