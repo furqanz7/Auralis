@@ -57,7 +57,10 @@ export function createSupabaseHiringStorage({ client, bucket }) {
       }
       return {
         objectKey,
-        contentType: result.data.content_type,
+        contentType:
+          result.data.mimetype ??
+          result.data.contentType ??
+          result.data.content_type,
         size: result.data.size
       };
     },

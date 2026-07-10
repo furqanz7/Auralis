@@ -16,7 +16,7 @@ function createFixture() {
       data: {
         name: "campaign/upload/cv.pdf",
         size: 2048,
-        content_type: "application/pdf"
+        mimetype: "application/pdf"
       },
       error: null
     })),
