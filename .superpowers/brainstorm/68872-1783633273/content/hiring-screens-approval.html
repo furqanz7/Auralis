@@ -1,0 +1,136 @@
+<style>
+  .concept-shell {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .concept-kicker {
+    color: #c8ff24;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .concept-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    margin: 30px 0;
+  }
+
+  .concept-item {
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.14);
+    background: #070708;
+  }
+
+  .concept-item img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+  }
+
+  .concept-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px 18px 18px;
+    border-top: 1px solid rgba(255,255,255,.12);
+  }
+
+  .concept-meta h3,
+  .concept-meta p {
+    margin: 0;
+  }
+
+  .concept-meta p {
+    color: rgba(255,255,255,.56);
+    font-size: 12px;
+    text-align: right;
+  }
+
+  .concept-principles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    margin-bottom: 26px;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.12);
+  }
+
+  .concept-principles span {
+    padding: 14px;
+    background: #0a0a0b;
+    color: rgba(255,255,255,.7);
+    font-size: 12px;
+    text-align: center;
+  }
+
+  @media (max-width: 820px) {
+    .concept-grid { grid-template-columns: 1fr; }
+    .concept-principles { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+
+<div class="concept-shell">
+  <div class="concept-kicker">Auralis / Hiring system</div>
+  <h2>Approve the complete visual system</h2>
+  <p class="subtitle">These four desktop states define the implementation. Mobile will preserve the same hierarchy in a single-column composition.</p>
+
+  <div class="concept-grid">
+    <section class="concept-item">
+      <img src="/files/application-concept.png" alt="Auralis private contractor application concept">
+      <div class="concept-meta">
+        <h3>01 / Application</h3>
+        <p>Role context, compact details, private CV upload</p>
+      </div>
+    </section>
+    <section class="concept-item">
+      <img src="/files/assessment-concept.png" alt="Auralis private MCQ assessment concept">
+      <div class="concept-meta">
+        <h3>02 / Assessment</h3>
+        <p>Timed MCQ, progress, one-answer selection</p>
+      </div>
+    </section>
+    <section class="concept-item">
+      <img src="/files/verification-concept.png" alt="Auralis card authorization verification concept">
+      <div class="concept-meta">
+        <h3>03 / Verification</h3>
+        <p>Transparent €2.99 authorization and cancellation</p>
+      </div>
+    </section>
+    <section class="concept-item">
+      <img src="/files/completion-concept.png" alt="Auralis application completion concept">
+      <div class="concept-meta">
+        <h3>04 / Completion</h3>
+        <p>Submission status, bank disclosure, next step</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="concept-principles">
+    <span>No public careers directory</span>
+    <span>No free-text assessment</span>
+    <span>No payment influence on hiring</span>
+    <span>No recruiter dashboard</span>
+  </div>
+
+  <div class="options">
+    <div class="option" data-choice="approve-visual-system" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Approve all four screens</h3>
+        <p>Lock this visual system and move to the written specification.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="revise-visual-system" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Request revisions</h3>
+        <p>Tell me which screen or interaction needs to change before implementation.</p>
+      </div>
+    </div>
+  </div>
+</div>

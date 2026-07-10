@@ -1,0 +1,32 @@
+import { expect, test, vi } from "vitest";
+import { createVerificationRuntime } from "../../api/_lib/verificationRuntime.js";
+
+test("composes hosted verification from private provider adapters", () => {
+  const client = { rpc: vi.fn() };
+  const service = createVerificationRuntime({
+    env: {
+      PUBLIC_SITE_URL: "https://auralis.studio",
+      HIRING_EMAIL_FROM: "Auralis Careers <auralis.careers@gmail.com>",
+      HIRING_RECRUITER_EMAIL: "auralis.careers@proton.me",
+      HIRING_TOKEN_SECRET: "assessment-secret-with-at-least-32-characters",
+      TBC_BASE_URL: "https://api.tbcbank.ge",
+      TBC_CHECKOUT_HOST: "tpay.tbcbank.ge",
+      TBC_API_KEY: "developer-api-key",
+      TBC_CLIENT_ID: "merchant-client-id",
+      TBC_CLIENT_SECRET: "merchant-client-secret"
+    },
+    client,
+    emailClient: { emails: { send: vi.fn() } },
+    fetchImpl: vi.fn()
+  });
+
+  expect(service).toEqual(
+    expect.objectContaining({
+      createSession: expect.any(Function),
+      handleCallback: expect.any(Function),
+      getStatus: expect.any(Function),
+      retryCancellation: expect.any(Function),
+      retryDueCancellations: expect.any(Function)
+    })
+  );
+});

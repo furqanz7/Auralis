@@ -1,0 +1,40 @@
+{
+  "name": "auralis-website",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run tests/e2e",
+    "resend:verify": "node --env-file=.env.local scripts/verify-resend.mjs",
+    "hiring:campaign": "node scripts/create-hiring-campaign.mjs"
+  },
+  "dependencies": {
+    "@barba/core": "^2.10.3",
+    "@react-three/fiber": "^9.4.0",
+    "@supabase/supabase-js": "^2.110.2",
+    "@vercel/analytics": "^2.0.1",
+    "animejs": "^3.2.2",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "react-router-dom": "^7.18.1",
+    "resend": "^6.17.2",
+    "three": "^0.181.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^5.1.1",
+    "jsdom": "^29.1.1",
+    "vite": "^7.2.7",
+    "vitest": "^4.1.10"
+  }
+}
