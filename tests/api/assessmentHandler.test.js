@@ -1,9 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
+import * as assessmentHttp from "../../api/_lib/assessmentHttp.js";
 import { AssessmentDomainError } from "../../api/_lib/assessmentService.js";
-import { createAssessmentReadHandler } from "../../api/assessments/[token]/index.js";
-import { createAssessmentStartHandler } from "../../api/assessments/[token]/start.js";
-import { createAssessmentAnswerHandler } from "../../api/assessments/[token]/answers/[questionId].js";
-import { createAssessmentSubmitHandler } from "../../api/assessments/[token]/submit.js";
 
 function response() {
   return {
@@ -34,6 +31,11 @@ function request(overrides = {}) {
   };
 }
 
+function createAssessmentHandler(service) {
+  expect(assessmentHttp.createAssessmentHandler).toBeTypeOf("function");
+  return assessmentHttp.createAssessmentHandler(service);
+}
+
 describe("assessment handlers", () => {
   test("reads a browser-safe private assessment with no-store headers", async () => {
     const service = {
@@ -50,7 +52,10 @@ describe("assessment handlers", () => {
     };
     const result = response();
 
-    await createAssessmentReadHandler(service)(request(), result);
+    await createAssessmentHandler(service)(
+      request({ query: { token: "private-assessment-token", action: "read" } }),
+      result
+    );
 
     expect(result.statusCode).toBe(200);
     expect(result.headers["cache-control"]).toBe("no-store");
@@ -59,9 +64,12 @@ describe("assessment handlers", () => {
 
   test("enforces methods and token presence", async () => {
     const result = response();
-    const handler = createAssessmentReadHandler({ getAssessment: vi.fn() });
+    const handler = createAssessmentHandler({ getAssessment: vi.fn() });
 
-    await handler(request({ method: "POST", query: {} }), result);
+    await handler(
+      request({ method: "POST", query: { action: "read" } }),
+      result
+    );
 
     expect(result.statusCode).toBe(405);
     expect(result.headers.allow).toBe("GET");
@@ -73,8 +81,12 @@ describe("assessment handlers", () => {
     };
     const result = response();
 
-    await createAssessmentStartHandler(service)(
-      request({ method: "POST", body: {} }),
+    await createAssessmentHandler(service)(
+      request({
+        method: "POST",
+        query: { token: "private-assessment-token", action: "start" },
+        body: {}
+      }),
       result
     );
 
@@ -88,10 +100,14 @@ describe("assessment handlers", () => {
     };
     const result = response();
 
-    await createAssessmentAnswerHandler(service)(
+    await createAssessmentHandler(service)(
       request({
         method: "PUT",
-        query: { token: "private-assessment-token", questionId: "ai-01" },
+        query: {
+          token: "private-assessment-token",
+          action: "answer",
+          questionId: "ai-01"
+        },
         body: { optionId: "a", version: 3 }
       }),
       result
@@ -110,10 +126,14 @@ describe("assessment handlers", () => {
     const service = { saveAnswer: vi.fn() };
     const result = response();
 
-    await createAssessmentAnswerHandler(service)(
+    await createAssessmentHandler(service)(
       request({
         method: "PUT",
-        query: { token: "private-assessment-token", questionId: "ai-01" },
+        query: {
+          token: "private-assessment-token",
+          action: "answer",
+          questionId: "ai-01"
+        },
         body: {
           optionId: "a",
           version: 3,
@@ -138,8 +158,12 @@ describe("assessment handlers", () => {
     };
     const result = response();
 
-    await createAssessmentSubmitHandler(service)(
-      request({ method: "POST", body: {} }),
+    await createAssessmentHandler(service)(
+      request({
+        method: "POST",
+        query: { token: "private-assessment-token", action: "submit" },
+        body: {}
+      }),
       result
     );
 
@@ -150,13 +174,20 @@ describe("assessment handlers", () => {
 
   test("maps stable assessment domain errors", async () => {
     const result = response();
-    const handler = createAssessmentStartHandler({
+    const handler = createAssessmentHandler({
       startAssessment: vi.fn(async () => {
         throw new AssessmentDomainError("ASSESSMENT_EXPIRED", 410);
       })
     });
 
-    await handler(request({ method: "POST", body: {} }), result);
+    await handler(
+      request({
+        method: "POST",
+        query: { token: "private-assessment-token", action: "start" },
+        body: {}
+      }),
+      result
+    );
 
     expect(result.statusCode).toBe(410);
     expect(result.body).toEqual({ error: { code: "ASSESSMENT_EXPIRED" } });

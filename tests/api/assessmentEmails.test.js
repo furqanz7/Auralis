@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
 import { createAssessmentService } from "../../api/_lib/assessmentService.js";
-import { createAssessmentReminderHandler } from "../../api/cron/assessment-reminders.js";
 import { hashToken } from "../../api/_lib/tokens.js";
 
 const NOW = new Date("2026-07-11T12:00:00.000Z");
@@ -60,25 +59,6 @@ function fixture({ claimed = [session()], emailFailure = null } = {}) {
     reminderTokenFactory: () => ASSESSMENT_TOKEN
   });
   return { attempts, email, repository, service };
-}
-
-function response() {
-  return {
-    statusCode: 200,
-    body: null,
-    headers: {},
-    setHeader(name, value) {
-      this.headers[name.toLowerCase()] = value;
-    },
-    status(code) {
-      this.statusCode = code;
-      return this;
-    },
-    json(body) {
-      this.body = body;
-      return this;
-    }
-  };
 }
 
 describe("assessment reminder dispatch", () => {
@@ -158,42 +138,5 @@ describe("assessment reminder dispatch", () => {
       failed: 1
     });
     expect(email.enqueueAssessmentReminder).not.toHaveBeenCalled();
-  });
-});
-
-describe("assessment reminder cron", () => {
-  test("rejects unauthenticated calls and dispatches an authorized GET", async () => {
-    const service = {
-      sendDueReminders: vi.fn(async () => ({
-        claimed: 2,
-        sent: 2,
-        failed: 0,
-        skipped: 0
-      }))
-    };
-    const handler = createAssessmentReminderHandler({
-      service,
-      cronSecret: "cron-secret-with-at-least-32-characters"
-    });
-    const unauthorized = response();
-    await handler({ method: "GET", headers: {} }, unauthorized);
-    expect(unauthorized.statusCode).toBe(401);
-    expect(service.sendDueReminders).not.toHaveBeenCalled();
-
-    const authorized = response();
-    await handler(
-      {
-        method: "GET",
-        headers: {
-          authorization: "Bearer cron-secret-with-at-least-32-characters"
-        }
-      },
-      authorized
-    );
-    expect(authorized.statusCode).toBe(200);
-    expect(authorized.headers["cache-control"]).toBe("no-store");
-    expect(authorized.body).toEqual({
-      reminders: { claimed: 2, sent: 2, failed: 0, skipped: 0 }
-    });
   });
 });

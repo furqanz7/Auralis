@@ -13,6 +13,22 @@
   ],
   "rewrites": [
     {
+      "source": "/api/assessments/:token/answers/:questionId",
+      "destination": "/api/assessments?token=:token&action=answer&questionId=:questionId"
+    },
+    {
+      "source": "/api/assessments/:token/start",
+      "destination": "/api/assessments?token=:token&action=start"
+    },
+    {
+      "source": "/api/assessments/:token/submit",
+      "destination": "/api/assessments?token=:token&action=submit"
+    },
+    {
+      "source": "/api/assessments/:token",
+      "destination": "/api/assessments?token=:token&action=read"
+    },
+    {
       "source": "/apply/:path*",
       "destination": "/index.html"
     },

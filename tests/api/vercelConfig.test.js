@@ -1,10 +1,25 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { readdir, readFile } from "node:fs/promises";
+import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 async function readConfig() {
   const source = await readFile(resolve(process.cwd(), "vercel.json"), "utf8");
   return JSON.parse(source);
+}
+
+async function listFunctionFiles(directory, root = directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    if (entry.name.startsWith("_") || entry.name.startsWith(".")) continue;
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await listFunctionFiles(path, root)));
+    } else if (entry.name.endsWith(".js")) {
+      files.push(relative(root, path));
+    }
+  }
+  return files;
 }
 
 function headerMap(rule) {
@@ -70,6 +85,39 @@ describe("Vercel private assessment routing", () => {
       path: "/api/cron/assessment-reminders",
       schedule: "0 * * * *"
     });
+  });
+
+  test("fits the Vercel Hobby function limit", async () => {
+    const functions = await listFunctionFiles(resolve(process.cwd(), "api"));
+
+    expect(functions).not.toContain("cron/assessment-reminders.js");
+    expect(functions).toHaveLength(12);
+  });
+
+  test("routes every assessment operation through one function", async () => {
+    const config = await readConfig();
+
+    expect(config.rewrites).toEqual(
+      expect.arrayContaining([
+        {
+          source: "/api/assessments/:token/answers/:questionId",
+          destination:
+            "/api/assessments?token=:token&action=answer&questionId=:questionId"
+        },
+        {
+          source: "/api/assessments/:token/start",
+          destination: "/api/assessments?token=:token&action=start"
+        },
+        {
+          source: "/api/assessments/:token/submit",
+          destination: "/api/assessments?token=:token&action=submit"
+        },
+        {
+          source: "/api/assessments/:token",
+          destination: "/api/assessments?token=:token&action=read"
+        }
+      ])
+    );
   });
 
   test("rewrites private verification and completion links to the SPA", async () => {
