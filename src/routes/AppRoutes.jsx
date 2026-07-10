@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import { HomePage } from "../App.jsx";
+import ApplicationPage from "../hiring/pages/ApplicationPage.jsx";
 import PrivateApplicationPage from "../hiring/pages/PrivateApplicationPage.jsx";
 import AssessmentPage from "../hiring/pages/AssessmentPage.jsx";
 import VerificationPage from "../hiring/pages/VerificationPage.jsx";
@@ -11,6 +12,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/apply" element={<ApplicationPage />} />
       <Route
         path="/apply/:roleSlug/:campaignToken"
         element={<PrivateApplicationPage />}

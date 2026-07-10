@@ -50,6 +50,24 @@ describe("Supabase application repository", () => {
     });
   });
 
+  test("reads direct intake roles through the service-role RPC", async () => {
+    const { repository, rpc } = createFixture({
+      get_direct_hiring_campaign: [campaignRow]
+    });
+    const now = new Date("2026-07-10T12:00:00.000Z");
+
+    await expect(repository.listDirectCampaigns({ now })).resolves.toEqual([
+      expect.objectContaining({
+        id: "campaign-id",
+        role: expect.objectContaining({ slug: "senior-ai-product-engineer" })
+      })
+    ]);
+    expect(rpc).toHaveBeenCalledWith("get_direct_hiring_campaign", {
+      p_role_slug: null,
+      p_now: now.toISOString()
+    });
+  });
+
   test("returns null for missing idempotent and recent applications", async () => {
     const { repository } = createFixture();
 

@@ -93,14 +93,32 @@ describe("application handlers", () => {
     expect(response.body.error.code).toBe("METHOD_NOT_ALLOWED");
   });
 
-  test("validates and delegates a private PDF upload request", async () => {
+  test("lists active direct-application roles without exposing a campaign", async () => {
+    const service = {
+      listApplicationRoles: vi.fn(async () => [
+        { slug: "senior-ai-product-engineer", title: "Senior AI Product Engineer" }
+      ])
+    };
+    const handler = createApplicationHandler(service);
+    const response = createResponse();
+
+    await handler(request({ method: "GET" }), response);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["cache-control"]).toBe("no-store");
+    expect(response.body).toEqual({
+      roles: [{ slug: "senior-ai-product-engineer", title: "Senior AI Product Engineer" }]
+    });
+  });
+
+  test("validates and delegates a direct PDF upload request", async () => {
     const service = {
       createUploadUrl: vi.fn(async () => ({ uploadToken: "signed-token" }))
     };
     const handler = createUploadUrlHandler(service);
     const response = createResponse();
     const body = {
-      campaignId: "550e8400-e29b-41d4-a716-446655440000",
+      roleSlug: "senior-ai-product-engineer",
       email: "nino@example.com",
       fileName: "nino-cv.pdf",
       mimeType: "application/pdf",
@@ -113,6 +131,36 @@ describe("application handlers", () => {
     expect(response.statusCode).toBe(200);
     expect(service.createUploadUrl).toHaveBeenCalledWith(body);
     expect(response.body).toEqual({ upload: { uploadToken: "signed-token" } });
+  });
+
+  test("creates a direct application without a campaign token", async () => {
+    const service = {
+      submitApplication: vi.fn(async () => ({ applicationReference: "AUR-1" }))
+    };
+    const handler = createApplicationHandler(service);
+    const response = createResponse();
+    const body = {
+      roleSlug: "senior-ai-product-engineer",
+      website: "",
+      payload: validPayload
+    };
+
+    await handler(
+      request({
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": "submission-123"
+        },
+        body
+      }),
+      response
+    );
+
+    expect(response.statusCode).toBe(201);
+    expect(service.submitApplication).toHaveBeenCalledWith({
+      ...body,
+      idempotencyKey: "submission-123"
+    });
   });
 
   test("rejects non-JSON and oversized request bodies", async () => {

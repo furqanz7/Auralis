@@ -15,6 +15,21 @@ function response(body, { ok = true, status = 200 } = {}) {
 }
 
 describe("hiring browser client", () => {
+  test("loads the available roles for the unlisted direct application page", async () => {
+    const fetchImpl = vi.fn(async () =>
+      response({ roles: [{ slug: "senior-ai-product-engineer" }] })
+    );
+    const client = createHiringClient(fetchImpl);
+
+    await expect(client.getApplicationRoles()).resolves.toEqual([
+      { slug: "senior-ai-product-engineer" }
+    ]);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "/api/applications",
+      expect.objectContaining({ cache: "no-store" })
+    );
+  });
+
   test("loads an encoded private campaign without cache", async () => {
     const fetchImpl = vi.fn(async () =>
       response({ campaign: { id: "campaign-id" } })

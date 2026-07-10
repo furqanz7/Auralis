@@ -115,7 +115,7 @@ describe("ApplicationForm", () => {
     );
     await fillForm(user, { includeProfile: false });
 
-    await user.click(screen.getByRole("button", { name: "Continue to review" }));
+    await user.click(screen.getByRole("button", { name: "Submit application" }));
 
     expect(
       screen.getByText("Add a portfolio, LinkedIn, or GitHub URL.")
@@ -139,7 +139,7 @@ describe("ApplicationForm", () => {
     );
     await fillForm(user);
 
-    await user.click(screen.getByRole("button", { name: "Continue to review" }));
+    await user.click(screen.getByRole("button", { name: "Submit application" }));
 
     expect(screen.getByRole("button", { name: "Uploading CV" })).toBeDisabled();
     releaseUpload();
@@ -159,7 +159,7 @@ describe("ApplicationForm", () => {
     );
     await fillForm(user);
 
-    await user.click(screen.getByRole("button", { name: "Continue to review" }));
+    await user.click(screen.getByRole("button", { name: "Submit application" }));
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveFocus();
@@ -206,7 +206,7 @@ describe("ApplicationForm", () => {
     expect(honeypot).toHaveAttribute("tabindex", "-1");
     expect(honeypot).toHaveAttribute("autocomplete", "off");
     await fillForm(user);
-    await user.click(screen.getByRole("button", { name: "Continue to review" }));
+    await user.click(screen.getByRole("button", { name: "Submit application" }));
 
     await waitFor(() => expect(client.submitApplication).toHaveBeenCalled());
     expect(client.createUploadUrl).toHaveBeenCalledWith(
@@ -216,5 +216,33 @@ describe("ApplicationForm", () => {
       expect.objectContaining({ website: "" }),
       expect.any(String)
     );
+  });
+
+  test("lets a direct applicant choose a role without exposing a campaign token", async () => {
+    const user = userEvent.setup();
+    const client = createClient();
+    const onRoleChange = vi.fn();
+    render(
+      <ApplicationForm
+        roles={[designRole, getRoleBySlug("senior-ai-product-engineer")]}
+        client={client}
+        onRoleChange={onRoleChange}
+      />
+    );
+
+    await user.selectOptions(screen.getByLabelText("Role"), designRole.slug);
+    await fillForm(user);
+    await user.click(screen.getByRole("button", { name: "Submit application" }));
+
+    await waitFor(() => expect(client.submitApplication).toHaveBeenCalled());
+    expect(onRoleChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ slug: designRole.slug })
+    );
+    expect(client.createUploadUrl).toHaveBeenCalledWith(
+      expect.objectContaining({ roleSlug: designRole.slug })
+    );
+    const [submission] = client.submitApplication.mock.calls[0];
+    expect(submission.roleSlug).toBe(designRole.slug);
+    expect(submission).not.toHaveProperty("campaignToken");
   });
 });

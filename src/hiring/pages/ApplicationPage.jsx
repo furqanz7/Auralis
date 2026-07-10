@@ -1,16 +1,18 @@
 import { ArrowLeft, Check, CircleAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
 import ApplicationForm from "../components/ApplicationForm.jsx";
 import RolePanel from "../components/RolePanel.jsx";
-import { createDemoHiringClient, hiringClient } from "../api/hiringClient.js";
+import {
+  createDemoApplicationClient,
+  hiringClient
+} from "../api/hiringClient.js";
 
-function PrivateHeader() {
+function ApplicationHeader() {
   return (
     <header className="hiring-header">
       <a className="hiring-brand" href="/" data-no-barba>Auralis</a>
       <div className="hiring-progress">
-        <h1>Private application</h1>
+        <h1>Contractor application</h1>
         <span><b>01</b> / 03</span>
       </div>
     </header>
@@ -20,7 +22,7 @@ function PrivateHeader() {
 function ApplicationState({ title, children, icon = "alert" }) {
   return (
     <main className="hiring-state-page">
-      <PrivateHeader />
+      <ApplicationHeader />
       <section className="hiring-state-content">
         <span className="hiring-state-icon" aria-hidden="true">
           {icon === "check" ? <Check size={23} /> : <CircleAlert size={23} />}
@@ -36,38 +38,36 @@ function ApplicationState({ title, children, icon = "alert" }) {
   );
 }
 
-export default function PrivateApplicationPage({ client }) {
-  const { roleSlug, campaignToken } = useParams();
-  const isDemo = import.meta.env.DEV && campaignToken === "demo-campaign";
+export default function ApplicationPage({ client }) {
+  const isDemo = import.meta.env.DEV;
   const activeClient = useMemo(
-    () => client ?? (isDemo ? createDemoHiringClient() : hiringClient),
+    () => client ?? (isDemo ? createDemoApplicationClient() : hiringClient),
     [client, isDemo]
   );
   const [state, setState] = useState({ status: "loading" });
+  const [selectedRole, setSelectedRole] = useState(null);
 
   useEffect(() => {
     document.body.classList.add("hiring-active");
     const robots = document.querySelector('meta[name="robots"]');
     const priorRobots = robots?.getAttribute("content");
+    const priorTitle = document.title;
     robots?.setAttribute("content", "noindex, nofollow");
+    document.title = "Apply | Auralis";
     return () => {
       document.body.classList.remove("hiring-active");
       if (robots && priorRobots) robots.setAttribute("content", priorRobots);
+      document.title = priorTitle;
     };
   }, []);
 
   useEffect(() => {
     let active = true;
-    setState({ status: "loading" });
     activeClient
-      .getCampaign(roleSlug, campaignToken)
-      .then((campaign) => {
-        if (active) {
-          setState({
-            status: "ready",
-            campaign: { ...campaign, token: campaignToken }
-          });
-        }
+      .getApplicationRoles()
+      .then((roles) => {
+        if (!active) return;
+        setState(roles.length > 0 ? { status: "ready", roles } : { status: "unavailable" });
       })
       .catch(() => {
         if (active) setState({ status: "unavailable" });
@@ -75,14 +75,12 @@ export default function PrivateApplicationPage({ client }) {
     return () => {
       active = false;
     };
-  }, [activeClient, campaignToken, roleSlug]);
+  }, [activeClient]);
 
   if (state.status === "unavailable") {
     return (
-      <ApplicationState title="Application unavailable">
-        <p>
-          This campaign cannot accept an application. Request a current private link from Auralis.
-        </p>
+      <ApplicationState title="Applications unavailable">
+        <p>There are no contractor roles accepting applications at this time.</p>
       </ApplicationState>
     );
   }
@@ -99,20 +97,20 @@ export default function PrivateApplicationPage({ client }) {
 
   return (
     <main className="hiring-page">
-      <PrivateHeader />
+      <ApplicationHeader />
       {state.status === "loading" ? (
         <section className="hiring-loading" aria-live="polite">
           <span />
-          <p>Opening private application</p>
+          <p>Opening applications</p>
         </section>
       ) : (
         <div className="hiring-main">
-          <RolePanel role={state.campaign.role} />
+          <RolePanel role={selectedRole} />
           <section className="hiring-form-panel" aria-label="Application details">
             <ApplicationForm
-              role={state.campaign.role}
-              campaign={state.campaign}
+              roles={state.roles}
               client={activeClient}
+              onRoleChange={setSelectedRole}
               onSubmitted={(result) => setState({ status: "submitted", result })}
             />
           </section>

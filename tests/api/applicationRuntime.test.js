@@ -23,6 +23,7 @@ test("composes the Phase 1 service from server-only provider adapters", () => {
   expect(service).toEqual(
     expect.objectContaining({
       validateCampaign: expect.any(Function),
+      listApplicationRoles: expect.any(Function),
       createUploadUrl: expect.any(Function),
       submitApplication: expect.any(Function),
       getRecruiterCv: expect.any(Function)

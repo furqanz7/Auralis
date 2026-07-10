@@ -39,6 +39,7 @@ describe("Vercel private assessment routing", () => {
   });
 
   test.each([
+    "/apply",
     "/apply/(.*)",
     "/api/campaigns/(.*)",
     "/api/applications",

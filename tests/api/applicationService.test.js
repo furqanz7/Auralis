@@ -37,6 +37,14 @@ function createFixture({ assessmentTokenFactory } = {}) {
     expiresAt: new Date("2026-08-01T00:00:00.000Z"),
     revokedAt: null
   };
+  const directCampaign = {
+    id: "direct-campaign-1",
+    label: "Direct application intake",
+    role,
+    activeAt: new Date("2026-07-01T00:00:00.000Z"),
+    expiresAt: new Date("2100-01-01T00:00:00.000Z"),
+    revokedAt: null
+  };
 
   function campaignIsAvailable(candidate, now) {
     return (
@@ -62,6 +70,14 @@ function createFixture({ assessmentTokenFactory } = {}) {
       return campaignId === campaign.id && campaignIsAvailable(campaign, now)
         ? campaign
         : null;
+    },
+    async findDirectCampaign({ roleSlug, now }) {
+      return roleSlug === role.slug && campaignIsAvailable(directCampaign, now)
+        ? directCampaign
+        : null;
+    },
+    async listDirectCampaigns({ now }) {
+      return campaignIsAvailable(directCampaign, now) ? [directCampaign] : [];
     },
     async findByIdempotencyKey(idempotencyKey) {
       return (
@@ -137,7 +153,12 @@ function createFixture({ assessmentTokenFactory } = {}) {
       };
     },
     async confirmObject(objectKey) {
-      if (objectKey !== validPayload.cvObjectKey) return null;
+      if (
+        objectKey !== validPayload.cvObjectKey &&
+        objectKey !== `${directCampaign.id}/upload-1/cv.pdf`
+      ) {
+        return null;
+      }
       return {
         objectKey,
         contentType: validPayload.cvMimeType,
@@ -167,7 +188,7 @@ function createFixture({ assessmentTokenFactory } = {}) {
     referenceFactory: () => `AUR-${state.applications.length + 1}`
   });
 
-  return { campaign, email, repository, service, state, storage };
+  return { campaign, directCampaign, email, repository, service, state, storage };
 }
 
 async function submit(service, overrides = {}) {
@@ -176,6 +197,18 @@ async function submit(service, overrides = {}) {
     campaignToken: "campaign-token",
     roleSlug: "senior-ai-product-engineer",
     payload: validPayload,
+    ...overrides
+  });
+}
+
+async function submitDirect(service, directCampaign, overrides = {}) {
+  return service.submitApplication({
+    idempotencyKey: "direct-submit-1",
+    roleSlug: directCampaign.role.slug,
+    payload: {
+      ...validPayload,
+      cvObjectKey: `${directCampaign.id}/upload-1/cv.pdf`
+    },
     ...overrides
   });
 }
@@ -190,6 +223,17 @@ describe("application service", () => {
         campaignToken: "wrong-token"
       })
     ).rejects.toMatchObject({ code: "CAMPAIGN_UNAVAILABLE" });
+  });
+
+  test("lists the active roles for the single direct application link", async () => {
+    const { service } = createFixture();
+
+    await expect(service.listApplicationRoles()).resolves.toEqual([
+      expect.objectContaining({
+        slug: "senior-ai-product-engineer",
+        title: "Senior AI Product Engineer"
+      })
+    ]);
   });
 
   test.each([
@@ -219,6 +263,23 @@ describe("application service", () => {
     expect(state.applications).toHaveLength(1);
     expect(state.recruiterEmails).toHaveLength(1);
     expect(state.recruiterEmails[0].to).toBe("auralis.careers@proton.me");
+  });
+
+  test("accepts a direct role selection without a campaign token", async () => {
+    const { directCampaign, service, state } = createFixture();
+
+    await expect(submitDirect(service, directCampaign)).resolves.toEqual({
+      applicationReference: "AUR-1"
+    });
+
+    expect(state.applications[0].campaign).toMatchObject({
+      id: "direct-campaign-1",
+      label: "Direct application intake"
+    });
+    expect(state.recruiterEmails).toHaveLength(1);
+    expect(state.tokens[0].expiresAt).toEqual(
+      new Date("2026-07-24T12:00:00.000Z")
+    );
   });
 
   test("uses the reproducible assessment token for storage and manual recruiter delivery", async () => {

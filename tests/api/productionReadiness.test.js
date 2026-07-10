@@ -65,7 +65,7 @@ describe("hiring production readiness", () => {
       "Vercel Cron",
       "Auralis, Tbilisi, Georgia",
       "HIRING_PROVIDER_MODE=live",
-      "npm run hiring:campaign"
+      "https://auralis-nine.vercel.app/apply"
     ]) {
       expect(readme).toContain(phrase);
     }

@@ -1,6 +1,6 @@
 # Auralis
 
-Auralis is a cinematic Vite and React studio website with a private, tokenized independent-contractor application funnel. There is no public careers directory, candidate account, or public assessment route.
+Auralis is a cinematic Vite and React studio website with an unlisted independent-contractor application route. There is no public careers directory, candidate account, or public assessment route.
 
 ## Local Development
 
@@ -16,20 +16,17 @@ Use `.env.example` as the environment inventory. `HIRING_PROVIDER_MODE=test` sel
 
 The browser uses `VITE_TBC_CHECKOUT_HOST`. Secrets without the `VITE_` prefix are server-only and must never be exposed to the browser.
 
-## Private Campaigns
+## Direct Applications
 
-After the live database is migrated and environment variables are loaded, issue an expiring private application link with:
+Use this unlisted applicant URL in the Instagram hiring post:
 
-```bash
-npm run hiring:campaign -- \
-  --role senior-ai-product-engineer \
-  --label "Instagram / July 2026" \
-  --days 14
+```text
+https://auralis-nine.vercel.app/apply
 ```
 
-The command inserts only the token hash and prints the private URL once. Post that URL through the intended Instagram campaign. Do not place it in site navigation, a sitemap, or a public role index. Revoke a campaign by setting `revoked_at` in `hiring_campaigns`.
+The page is intentionally reachable from that direct link, but it is not included in site navigation, a sitemap, or a public careers directory. Applicants select one active role in the form, upload a PDF CV, and submit their details. The server maps the chosen role to a server-owned intake source; campaign IDs and tokens are never exposed to the applicant.
 
-Available role slugs are defined in `shared/hiring/roles.js`.
+Every submission sends an internal notification to `auralis.careers@proton.me` with the candidate details, a one-time CV link, and a private assessment URL. Forward the assessment URL manually after reviewing the CV. The applicant never receives an automatic assessment email.
 
 ## Supabase Migrations
 
@@ -48,7 +45,7 @@ Run them against a dedicated project before issuing a campaign. Confirm that the
 
 ### Resend Internal Delivery
 
-The sender is `Auralis Hiring <onboarding@resend.dev>`. Every application notification is delivered to `auralis.careers@proton.me` with the candidate details, a private CV link, and a private assessment URL. The Proton address must be the email address on the Resend account because Resend's test sender can only deliver to its account owner. Auralis sends the assessment URL manually after review; the system does not automatically email candidates, including reminders, verification updates, or deletion-confirmation links.
+The sender is `Auralis Hiring <onboarding@resend.dev>`. Every application notification is delivered to `auralis.careers@proton.me` with the candidate details, a private CV link, and a private assessment URL valid for 14 days after application. The Proton address must be the email address on the Resend account because Resend's test sender can only deliver to its account owner. Auralis sends the assessment URL manually after review; the system does not automatically email candidates, including reminders, verification updates, or deletion-confirmation links.
 
 After entering a newly rotated Resend API key in the ignored `.env.local` file, verify delivery to the Proton inbox with:
 
@@ -94,7 +91,7 @@ The privacy controller is identified as Auralis, Tbilisi, Georgia. Have qualifie
 - Verify Vercel Cron authentication, retry schedules, retention runs, and operational alerts.
 - Verify the published controller identity, Auralis, Tbilisi, Georgia, and obtain legal review.
 - Run `npm test`, `npm run test:e2e`, and `npm run build`.
-- Verify private application, assessment, verification, completion, and privacy routes at desktop and mobile widths with no text overlap or horizontal overflow.
+- Verify the unlisted `/apply` route, assessment, verification, completion, and privacy routes at desktop and mobile widths with no text overlap or horizontal overflow.
 - Confirm every application notification reaches `auralis.careers@proton.me` with a working CV link and assessment URL.
 - Confirm verification never changes score, eligibility, review order, or contractor selection.
 

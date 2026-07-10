@@ -82,7 +82,9 @@ function errorMessage(code) {
 }
 
 export default function ApplicationForm({
-  roles = [],
+  roles: providedRoles = [],
+  role: fixedRole = null,
+  campaign = null,
   client,
   onSubmitted = NOOP,
   onRoleChange = NOOP
@@ -96,7 +98,8 @@ export default function ApplicationForm({
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("editing");
   const [formError, setFormError] = useState("");
-  const role = roles.find((candidate) => candidate.slug === fields.roleSlug) ?? null;
+  const roles = fixedRole ? [fixedRole] : providedRoles;
+  const role = fixedRole ?? roles.find((candidate) => candidate.slug === fields.roleSlug) ?? null;
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fields));
@@ -175,7 +178,7 @@ export default function ApplicationForm({
     try {
       setStatus("uploading");
       const upload = await client.createUploadUrl({
-        roleSlug: role.slug,
+        ...(campaign ? { campaignId: campaign.id } : { roleSlug: role.slug }),
         email: fields.email.trim().toLowerCase(),
         fileName: cvFile.name,
         mimeType: cvFile.type,
@@ -188,6 +191,7 @@ export default function ApplicationForm({
       const result = await client.submitApplication(
         {
           roleSlug: role.slug,
+          ...(campaign ? { campaignToken: campaign.token } : {}),
           website,
           payload: {
             fullName: fields.fullName.trim(),
@@ -242,24 +246,26 @@ export default function ApplicationForm({
       <fieldset className="hiring-fieldset" disabled={pending}>
         <legend><i aria-hidden="true" />Your details</legend>
 
-        <div className="hiring-field hiring-field-wide">
-          <label htmlFor={`${formId}-role`}>Role</label>
-          <select
-            id={`${formId}-role`}
-            name="roleSlug"
-            value={fields.roleSlug}
-            onChange={updateField}
-            aria-invalid={Boolean(errors.roleSlug)}
-          >
-            <option value="">Select the role you are applying for</option>
-            {roles.map((availableRole) => (
-              <option key={availableRole.slug} value={availableRole.slug}>
-                {availableRole.title}
-              </option>
-            ))}
-          </select>
-          {errors.roleSlug ? <small>{errors.roleSlug}</small> : null}
-        </div>
+        {!fixedRole ? (
+          <div className="hiring-field hiring-field-wide">
+            <label htmlFor={`${formId}-role`}>Role</label>
+            <select
+              id={`${formId}-role`}
+              name="roleSlug"
+              value={fields.roleSlug}
+              onChange={updateField}
+              aria-invalid={Boolean(errors.roleSlug)}
+            >
+              <option value="">Select the role you are applying for</option>
+              {roles.map((availableRole) => (
+                <option key={availableRole.slug} value={availableRole.slug}>
+                  {availableRole.title}
+                </option>
+              ))}
+            </select>
+            {errors.roleSlug ? <small>{errors.roleSlug}</small> : null}
+          </div>
+        ) : null}
 
         <div className="hiring-field hiring-field-wide">
           <label htmlFor={`${formId}-name`}>Full name</label>
