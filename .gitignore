@@ -4,3 +4,6 @@ dist
 tmp
 .env*
 !.env.example
+
+.superpowers/
+supabase/.temp/
