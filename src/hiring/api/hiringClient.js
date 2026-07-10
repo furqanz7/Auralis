@@ -1,4 +1,4 @@
-import { getRoleBySlug } from "../../../shared/hiring/roles.js";
+import { getRoleBySlug, ROLE_CONFIG } from "../../../shared/hiring/roles.js";
 
 export class HiringApiError extends Error {
   constructor(code, status) {
@@ -29,6 +29,14 @@ export function createHiringClient(fetchImpl = fetch) {
   };
 
   return {
+    async getApplicationRoles() {
+      const response = await fetchImpl("/api/applications", {
+        cache: "no-store",
+        headers: { accept: "application/json" }
+      });
+      return (await parseJsonResponse(response)).roles;
+    },
+
     async getCampaign(roleSlug, campaignToken) {
       const response = await fetchImpl(
         `/api/campaigns/${encodeURIComponent(roleSlug)}/${encodeURIComponent(campaignToken)}`,
@@ -156,6 +164,26 @@ export function createHiringClient(fetchImpl = fetch) {
         body: JSON.stringify({ deletionToken })
       });
       return parseJsonResponse(response);
+    }
+  };
+}
+
+export function createDemoApplicationClient() {
+  return {
+    async getApplicationRoles() {
+      return ROLE_CONFIG;
+    },
+    async createUploadUrl({ roleSlug }) {
+      return {
+        objectKey: `direct-${roleSlug}/local-preview/cv.pdf`,
+        uploadUrl: "https://example.invalid/local-preview"
+      };
+    },
+    async uploadCv() {},
+    async submitApplication() {
+      return {
+        applicationReference: "AUR-PREVIEW"
+      };
     }
   };
 }

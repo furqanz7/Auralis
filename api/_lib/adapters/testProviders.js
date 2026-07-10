@@ -35,6 +35,14 @@ export function createTestHiringProviders({
     expiresAt: new Date(now.getTime() + 30 * DAY_MS),
     revokedAt: null
   };
+  const directCampaign = {
+    id: "test-direct-campaign-1",
+    label: "Direct application intake",
+    role,
+    activeAt: new Date(now.getTime() - DAY_MS),
+    expiresAt: new Date("2100-01-01T00:00:00.000Z"),
+    revokedAt: null
+  };
   const state = {
     applications: [],
     tokens: [],
@@ -54,8 +62,8 @@ export function createTestHiringProviders({
     return `${prefix}-${state.sequence}`;
   }
 
-  function campaignAvailable(at) {
-    return !campaign.revokedAt && campaign.activeAt <= at && campaign.expiresAt > at;
+  function campaignAvailable(candidate, at) {
+    return !candidate.revokedAt && candidate.activeAt <= at && candidate.expiresAt > at;
   }
 
   function emailResult(type, input) {
@@ -113,12 +121,22 @@ export function createTestHiringProviders({
     async findCampaign({ roleSlug, tokenHash, now: at }) {
       return roleSlug === role.slug &&
         tokenHash === campaign.tokenHash &&
-        campaignAvailable(at)
+        campaignAvailable(campaign, at)
         ? campaign
         : null;
     },
     async findCampaignById({ campaignId, now: at }) {
-      return campaignId === campaign.id && campaignAvailable(at) ? campaign : null;
+      return campaignId === campaign.id && campaignAvailable(campaign, at)
+        ? campaign
+        : null;
+    },
+    async findDirectCampaign({ roleSlug, now: at }) {
+      return roleSlug === role.slug && campaignAvailable(directCampaign, at)
+        ? directCampaign
+        : null;
+    },
+    async listDirectCampaigns({ now: at }) {
+      return campaignAvailable(directCampaign, at) ? [directCampaign] : [];
     },
     async findByIdempotencyKey(idempotencyKey) {
       return state.applications.find(
@@ -537,6 +555,7 @@ export function createTestHiringProviders({
   return {
     state,
     campaign: { ...campaign, token: campaignToken },
+    directCampaign,
     storage,
     email,
     payment,

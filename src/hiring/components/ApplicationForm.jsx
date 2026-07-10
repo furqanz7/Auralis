@@ -6,7 +6,9 @@ import {
 } from "../../../shared/hiring/applicationSchema.js";
 
 const STORAGE_KEY = "auralis:hiring:application";
+const NOOP = () => {};
 const EMPTY_FORM = {
+  roleSlug: "",
   fullName: "",
   email: "",
   country: "",
@@ -70,6 +72,8 @@ function errorMessage(code) {
   const messages = {
     CAMPAIGN_UNAVAILABLE:
       "This private application link is no longer available. Request a current link from Auralis.",
+    ROLE_UNAVAILABLE:
+      "That role is no longer accepting applications. Choose another role to continue.",
     CV_UPLOAD_FAILED: "The CV could not be uploaded. Your other details are still here.",
     INVALID_CV: "The uploaded CV could not be confirmed. Choose the PDF again.",
     INVALID_APPLICATION: "Review the marked fields and try again."
@@ -78,10 +82,10 @@ function errorMessage(code) {
 }
 
 export default function ApplicationForm({
-  role,
-  campaign,
+  roles = [],
   client,
-  onSubmitted = () => {}
+  onSubmitted = NOOP,
+  onRoleChange = NOOP
 }) {
   const formId = useId();
   const errorRef = useRef(null);
@@ -92,6 +96,7 @@ export default function ApplicationForm({
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("editing");
   const [formError, setFormError] = useState("");
+  const role = roles.find((candidate) => candidate.slug === fields.roleSlug) ?? null;
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fields));
@@ -100,6 +105,10 @@ export default function ApplicationForm({
   useEffect(() => {
     if (status === "error") errorRef.current?.focus();
   }, [status]);
+
+  useEffect(() => {
+    onRoleChange(role);
+  }, [onRoleChange, role]);
 
   function updateField(event) {
     const { name, type, checked, value } = event.target;
@@ -128,13 +137,14 @@ export default function ApplicationForm({
 
   function validate() {
     const next = {};
+    if (!role) next.roleSlug = "Choose the role you are applying for.";
     if (fields.fullName.trim().length < 2) next.fullName = "Enter your full name.";
     if (!/^\S+@\S+\.\S+$/.test(fields.email.trim())) {
       next.email = "Enter a valid email address.";
     }
     if (!fields.country) next.country = "Choose your country.";
     if (!fields.timeZone) next.timeZone = "Choose your time zone.";
-    if (role.portfolioRequired && !fields.profileUrl.trim()) {
+    if (role?.portfolioRequired && !fields.profileUrl.trim()) {
       next.profileUrl = "Add a portfolio, LinkedIn, or GitHub URL.";
     } else if (fields.profileUrl && !isHttpUrl(fields.profileUrl)) {
       next.profileUrl = "Use a valid http or https URL.";
@@ -165,7 +175,7 @@ export default function ApplicationForm({
     try {
       setStatus("uploading");
       const upload = await client.createUploadUrl({
-        campaignId: campaign.id,
+        roleSlug: role.slug,
         email: fields.email.trim().toLowerCase(),
         fileName: cvFile.name,
         mimeType: cvFile.type,
@@ -178,7 +188,6 @@ export default function ApplicationForm({
       const result = await client.submitApplication(
         {
           roleSlug: role.slug,
-          campaignToken: campaign.token,
           website,
           payload: {
             fullName: fields.fullName.trim(),
@@ -210,7 +219,7 @@ export default function ApplicationForm({
       ? "Uploading CV"
       : status === "submitting"
         ? "Submitting application"
-        : "Continue to review";
+        : "Submit application";
 
   return (
     <form className="hiring-form" onSubmit={handleSubmit} noValidate>
@@ -232,6 +241,25 @@ export default function ApplicationForm({
 
       <fieldset className="hiring-fieldset" disabled={pending}>
         <legend><i aria-hidden="true" />Your details</legend>
+
+        <div className="hiring-field hiring-field-wide">
+          <label htmlFor={`${formId}-role`}>Role</label>
+          <select
+            id={`${formId}-role`}
+            name="roleSlug"
+            value={fields.roleSlug}
+            onChange={updateField}
+            aria-invalid={Boolean(errors.roleSlug)}
+          >
+            <option value="">Select the role you are applying for</option>
+            {roles.map((availableRole) => (
+              <option key={availableRole.slug} value={availableRole.slug}>
+                {availableRole.title}
+              </option>
+            ))}
+          </select>
+          {errors.roleSlug ? <small>{errors.roleSlug}</small> : null}
+        </div>
 
         <div className="hiring-field hiring-field-wide">
           <label htmlFor={`${formId}-name`}>Full name</label>
@@ -298,7 +326,7 @@ export default function ApplicationForm({
         <div className="hiring-field hiring-field-wide">
           <label htmlFor={`${formId}-profile`}>
             Portfolio, LinkedIn, or GitHub URL
-            <span>{role.portfolioRequired ? "Required" : "Optional"}</span>
+            <span>{role?.portfolioRequired ? "Required" : "Optional"}</span>
           </label>
           <input
             id={`${formId}-profile`}

@@ -45,10 +45,10 @@ export function createHiringEmailAdapter({
           html: [
             `<p><strong>${candidateName}</strong> applied for ${roleTitle}.</p>`,
             `<p>Reference: ${escapeHtml(application.reference)}</p>`,
-            `<p>Campaign: ${escapeHtml(application.campaign.label)}</p>`,
+            `<p>Application route: ${escapeHtml(application.campaign.label)}</p>`,
             `<p>Email: ${escapeHtml(application.email)}</p>`,
             `<p><a href="${cvUrl}">Open CV</a> (single use; available for 30 days)</p>`,
-            `<p><a href="${assessmentUrl}">Open private assessment link</a> (single use; expires 72 hours after application)</p>`,
+            `<p><a href="${assessmentUrl}">Open private assessment link</a> (single use; expires 14 days after application)</p>`,
             "<p>Send this link manually to the candidate after your review. The application is ready for human review regardless of assessment or verification completion.</p>"
           ].join("")
         },

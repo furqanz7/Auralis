@@ -5,6 +5,7 @@ import {
 import { createOpaqueToken, hashToken } from "./tokens.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const ASSESSMENT_INVITATION_DAYS = 14;
 
 export class ApplicationDomainError extends Error {
   constructor(code, status = 400) {
@@ -42,6 +43,10 @@ function publicCampaign(campaign) {
       portfolioRequired: role.portfolioRequired
     }
   };
+}
+
+function publicRole(campaign) {
+  return publicCampaign(campaign).role;
 }
 
 function validateCv({ fileName, mimeType, size }) {
@@ -90,21 +95,48 @@ export function createApplicationService({
     return campaign;
   }
 
+  async function findDirectCampaign({ roleSlug }) {
+    if (!roleSlug) fail("ROLE_UNAVAILABLE", 404);
+
+    const campaign = await repository.findDirectCampaign({
+      roleSlug,
+      now: clock.now()
+    });
+    if (!campaign) fail("ROLE_UNAVAILABLE", 404);
+    return campaign;
+  }
+
   return {
     async validateCampaign(input) {
       return publicCampaign(await findCampaign(input));
     },
 
-    async createUploadUrl({ campaignId, email: candidateEmail, fileName, mimeType, size }) {
+    async listApplicationRoles() {
+      const campaigns = await repository.listDirectCampaigns({
+        now: clock.now()
+      });
+      return campaigns.map(publicRole);
+    },
+
+    async createUploadUrl({
+      campaignId,
+      roleSlug,
+      email: candidateEmail,
+      fileName,
+      mimeType,
+      size
+    }) {
       validateCv({ fileName, mimeType, size });
       if (typeof candidateEmail !== "string" || !candidateEmail.includes("@")) {
         fail("INVALID_APPLICATION", 422);
       }
 
-      const campaign = await repository.findCampaignById({
-        campaignId,
-        now: clock.now()
-      });
+      const campaign = roleSlug
+        ? await findDirectCampaign({ roleSlug })
+        : await repository.findCampaignById({
+            campaignId,
+            now: clock.now()
+          });
       if (!campaign) fail("CAMPAIGN_UNAVAILABLE", 404);
 
       const objectKey = `${campaign.id}/${tokenFactory()}/cv.pdf`;
@@ -131,7 +163,9 @@ export function createApplicationService({
       const parsed = applicationSchema.safeParse(payload);
       if (!parsed.success) fail("INVALID_APPLICATION", 422);
 
-      const campaign = await findCampaign({ roleSlug, campaignToken });
+      const campaign = campaignToken
+        ? await findCampaign({ roleSlug, campaignToken })
+        : await findDirectCampaign({ roleSlug });
 
       const confirmedCv = await storage.confirmObject(parsed.data.cvObjectKey);
       const cvBelongsToCampaign = parsed.data.cvObjectKey.startsWith(`${campaign.id}/`);
@@ -161,7 +195,9 @@ export function createApplicationService({
         payload: parsed.data,
         reference: referenceFactory(),
         assessmentTokenHash: hashToken(assessmentToken),
-        assessmentExpiresAt: new Date(now.getTime() + 72 * 60 * 60 * 1000),
+        assessmentExpiresAt: new Date(
+          now.getTime() + ASSESSMENT_INVITATION_DAYS * DAY_MS
+        ),
         recruiterTokenHash: hashToken(recruiterToken),
         recruiterTokenExpiresAt: new Date(now.getTime() + 30 * DAY_MS),
         now

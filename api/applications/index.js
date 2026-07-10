@@ -3,7 +3,6 @@ import { applicationSchema } from "../../shared/hiring/applicationSchema.js";
 import {
   getHeader,
   readJsonBody,
-  requireMethod,
   sendHttpError,
   setPrivateHeaders
 } from "../_lib/http.js";
@@ -11,7 +10,7 @@ import { getApplicationRuntimeService } from "../_lib/applicationRuntime.js";
 
 const applicationRequestSchema = z.object({
   roleSlug: z.string().min(1).max(120),
-  campaignToken: z.string().min(16).max(512),
+  campaignToken: z.string().min(16).max(512).optional(),
   website: z.string().trim().max(0).default(""),
   payload: applicationSchema
 });
@@ -20,7 +19,17 @@ export function createApplicationHandler(service) {
   return async function applicationHandler(request, response) {
     setPrivateHeaders(response);
     try {
-      requireMethod(request, response, "POST");
+      if (request.method === "GET") {
+        const roles = await service.listApplicationRoles();
+        return response.status(200).json({ roles });
+      }
+      if (request.method !== "POST") {
+        response.setHeader("Allow", "GET, POST");
+        return response.status(405).json({
+          error: { code: "METHOD_NOT_ALLOWED" }
+        });
+      }
+
       const body = readJsonBody(request);
       const idempotencyKey = getHeader(request, "idempotency-key");
       if (

@@ -137,6 +137,17 @@ export function createSupabaseApplicationRepository({ client }) {
     );
   }
 
+  async function getDirectCampaigns({ roleSlug, now }) {
+    const rows = assertSupabaseResult(
+      await client.rpc("get_direct_hiring_campaign", {
+        p_role_slug: roleSlug ?? null,
+        p_now: now.toISOString()
+      }),
+      "direct application lookup"
+    );
+    return (Array.isArray(rows) ? rows : rows ? [rows] : []).map(mapCampaign);
+  }
+
   return {
     async findCampaign({ roleSlug, tokenHash, now }) {
       return getCampaign({
@@ -154,6 +165,14 @@ export function createSupabaseApplicationRepository({ client }) {
         p_campaign_id: campaignId,
         p_now: now.toISOString()
       });
+    },
+
+    async findDirectCampaign({ roleSlug, now }) {
+      return (await getDirectCampaigns({ roleSlug, now }))[0] ?? null;
+    },
+
+    async listDirectCampaigns({ now }) {
+      return getDirectCampaigns({ now });
     },
 
     async findByIdempotencyKey(idempotencyKey) {

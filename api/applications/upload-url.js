@@ -9,13 +9,17 @@ import {
 import { getApplicationRuntimeService } from "../_lib/applicationRuntime.js";
 
 const uploadRequestSchema = z.object({
-  campaignId: z.string().uuid(),
+  campaignId: z.string().uuid().optional(),
+  roleSlug: z.string().min(1).max(120).optional(),
   email: z.string().trim().email().max(254),
   fileName: z.string().min(1).max(255).regex(/\.pdf$/i),
   mimeType: z.literal("application/pdf"),
   size: z.number().int().positive().max(APPLICATION_MAX_CV_BYTES),
   website: z.string().trim().max(0).default("")
-});
+}).refine(
+  ({ campaignId, roleSlug }) => Boolean(campaignId) !== Boolean(roleSlug),
+  { message: "Provide one application source." }
+);
 
 export function createUploadUrlHandler(service) {
   return async function uploadUrlHandler(request, response) {
