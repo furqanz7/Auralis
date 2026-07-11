@@ -489,18 +489,121 @@ function mapPaymentVerification(row) {
   };
 }
 
+function mapWisePaymentReport(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    applicationId: row.application_id,
+    payerName: row.payer_name,
+    amountMinor: row.amount_minor,
+    currency: row.currency,
+    reportedAt: new Date(row.reported_at),
+    notificationSentAt: optionalDate(row.notification_sent_at),
+    notificationAttemptCount: row.notification_attempt_count,
+    lastNotificationError: row.last_notification_error
+  };
+}
+
 function mapVerificationRecord(payload) {
   if (!payload) return null;
   if (Object.hasOwn(payload, "verification")) {
     return {
       application: mapVerificationApplication(payload.application),
-      verification: mapPaymentVerification(payload.verification)
+      verification: mapPaymentVerification(payload.verification),
+      paymentReport: mapWisePaymentReport(payload.payment_report)
     };
   }
   const verification = mapPaymentVerification(payload);
   return {
     application: verification?.application ?? null,
-    verification
+    verification,
+    paymentReport: mapWisePaymentReport(payload.payment_report)
+  };
+}
+
+function mapWisePaymentReportClaim(payload) {
+  if (!payload) return null;
+  return {
+    application: mapVerificationApplication(payload.application),
+    paymentReport: mapWisePaymentReport(payload.payment_report),
+    notificationClaimed: payload.notification_claimed === true
+  };
+}
+
+export function createSupabaseWisePaymentReportRepository({ client }) {
+  return {
+    async findByAccessTokenHash(tokenHash, now) {
+      const payload = firstRow(
+        await client.rpc("get_hiring_verification_by_token", {
+          p_token_hash: tokenHash,
+          p_now: now.toISOString()
+        }),
+        "Wise payment report lookup"
+      );
+      if (!payload) return null;
+      const record = mapVerificationRecord(payload);
+      return {
+        application: record.application,
+        paymentReport: record.paymentReport
+      };
+    },
+
+    async createAndClaim({ tokenHash, payerName, reportedAt }) {
+      return mapWisePaymentReportClaim(
+        firstRow(
+          await client.rpc("create_hiring_wise_payment_report", {
+            p_token_hash: tokenHash,
+            p_payer_name: payerName,
+            p_now: reportedAt.toISOString()
+          }),
+          "Wise payment report creation"
+        )
+      );
+    },
+
+    async claimNotification({ reportId, claimedAt }) {
+      return mapWisePaymentReportClaim(
+        firstRow(
+          await client.rpc("claim_hiring_wise_payment_report_notification", {
+            p_report_id: reportId,
+            p_now: claimedAt.toISOString()
+          }),
+          "Wise payment report notification claim"
+        )
+      );
+    },
+
+    async markNotificationSent({ reportId, attemptNumber, sentAt }) {
+      return mapWisePaymentReport(
+        firstRow(
+          await client.rpc("mark_hiring_wise_payment_report_sent", {
+            p_report_id: reportId,
+            p_attempt_number: attemptNumber,
+            p_sent_at: sentAt.toISOString()
+          }),
+          "Wise payment report notification completion"
+        )
+      );
+    },
+
+    async markNotificationFailed({
+      reportId,
+      attemptNumber,
+      errorCategory,
+      failedAt
+    }) {
+      return mapWisePaymentReport(
+        firstRow(
+          await client.rpc("mark_hiring_wise_payment_report_failed", {
+            p_report_id: reportId,
+            p_attempt_number: attemptNumber,
+            p_error_category: errorCategory,
+            p_failed_at: failedAt.toISOString()
+          }),
+          "Wise payment report notification failure"
+        )
+      );
+    }
   };
 }
 

@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from "vitest";
-import { createSupabaseVerificationRepository } from "../../api/_lib/adapters/supabase.js";
+import {
+  createSupabaseVerificationRepository,
+  createSupabaseWisePaymentReportRepository
+} from "../../api/_lib/adapters/supabase.js";
 
 const application = {
   id: "application-1",
@@ -39,6 +42,18 @@ const verificationPayload = {
   application
 };
 
+const paymentReportPayload = {
+  id: "wise-report-1",
+  application_id: "application-1",
+  payer_name: "Nino Beridze",
+  amount_minor: 299,
+  currency: "EUR",
+  reported_at: "2026-07-11T10:00:00.000Z",
+  notification_sent_at: null,
+  notification_attempt_count: 1,
+  last_notification_error: "NOTIFICATION_IN_PROGRESS"
+};
+
 function fixture(overrides = {}) {
   const defaults = {
     get_hiring_application_for_verification: application,
@@ -53,7 +68,10 @@ function fixture(overrides = {}) {
     complete_hiring_verification_cancellation: true,
     fail_hiring_payment_verification: true,
     schedule_hiring_verification_retry: true,
-    get_hiring_verification_by_token: verificationPayload,
+    get_hiring_verification_by_token: {
+      ...verificationPayload,
+      payment_report: paymentReportPayload
+    },
     claim_hiring_verification_retries: [
       {
         ...verificationPayload,
@@ -177,7 +195,17 @@ describe("Supabase verification repository", () => {
       repository.findByAccessTokenHash("c".repeat(64), now)
     ).resolves.toMatchObject({
       application: { email: "nino@example.com" },
-      verification: { state: "pending", amountMinor: 299 }
+      verification: { state: "pending", amountMinor: 299 },
+      paymentReport: {
+        id: "wise-report-1",
+        payerName: "Nino Beridze",
+        amountMinor: 299,
+        currency: "EUR",
+        reportedAt: new Date("2026-07-11T10:00:00.000Z"),
+        notificationSentAt: null,
+        notificationAttemptCount: 1,
+        lastNotificationError: "NOTIFICATION_IN_PROGRESS"
+      }
     });
     await expect(
       repository.claimDueCancellations({ now, limit: 20 })
@@ -190,6 +218,158 @@ describe("Supabase verification repository", () => {
     expect(rpc).toHaveBeenCalledWith("claim_hiring_verification_retries", {
       p_now: now.toISOString(),
       p_limit: 20
+    });
+  });
+});
+
+describe("Supabase Wise payment report repository", () => {
+  function wiseFixture(overrides = {}) {
+    const defaults = {
+      get_hiring_verification_by_token: {
+        application,
+        verification: null,
+        payment_report: paymentReportPayload
+      },
+      create_hiring_wise_payment_report: {
+        application,
+        payment_report: paymentReportPayload,
+        notification_claimed: true
+      },
+      claim_hiring_wise_payment_report_notification: {
+        application,
+        payment_report: {
+          ...paymentReportPayload,
+          notification_attempt_count: 2
+        },
+        notification_claimed: true
+      },
+      mark_hiring_wise_payment_report_sent: {
+        ...paymentReportPayload,
+        notification_sent_at: "2026-07-11T10:01:00.000Z",
+        last_notification_error: null
+      },
+      mark_hiring_wise_payment_report_failed: {
+        ...paymentReportPayload,
+        last_notification_error: "EMAIL_DELIVERY_FAILED"
+      }
+    };
+    const rpc = vi.fn(async (name) => ({
+      data: name in overrides ? overrides[name] : defaults[name],
+      error: null
+    }));
+    return {
+      repository: createSupabaseWisePaymentReportRepository({ client: { rpc } }),
+      rpc
+    };
+  }
+
+  test("maps verification status payment-report dates and claim metadata", async () => {
+    const { repository, rpc } = wiseFixture();
+    const now = new Date("2026-07-11T10:00:30.000Z");
+
+    await expect(
+      repository.findByAccessTokenHash("d".repeat(64), now)
+    ).resolves.toEqual({
+      application: expect.objectContaining({ id: "application-1" }),
+      paymentReport: {
+        id: "wise-report-1",
+        applicationId: "application-1",
+        payerName: "Nino Beridze",
+        amountMinor: 299,
+        currency: "EUR",
+        reportedAt: new Date("2026-07-11T10:00:00.000Z"),
+        notificationSentAt: null,
+        notificationAttemptCount: 1,
+        lastNotificationError: "NOTIFICATION_IN_PROGRESS"
+      }
+    });
+    expect(rpc).toHaveBeenCalledWith("get_hiring_verification_by_token", {
+      p_token_hash: "d".repeat(64),
+      p_now: now.toISOString()
+    });
+  });
+
+  test("creates and claims a report with exact RPC argument names", async () => {
+    const { repository, rpc } = wiseFixture();
+    const reportedAt = new Date("2026-07-11T10:00:00.000Z");
+
+    await expect(
+      repository.createAndClaim({
+        tokenHash: "e".repeat(64),
+        payerName: "Nino Beridze",
+        reportedAt
+      })
+    ).resolves.toMatchObject({
+      application: { id: "application-1" },
+      paymentReport: { id: "wise-report-1" },
+      notificationClaimed: true
+    });
+    expect(rpc).toHaveBeenCalledWith("create_hiring_wise_payment_report", {
+      p_token_hash: "e".repeat(64),
+      p_payer_name: "Nino Beridze",
+      p_now: reportedAt.toISOString()
+    });
+  });
+
+  test("claims notification delivery with an ISO claim timestamp", async () => {
+    const { repository, rpc } = wiseFixture();
+    const claimedAt = new Date("2026-07-11T10:05:00.000Z");
+
+    await expect(
+      repository.claimNotification({
+        reportId: "wise-report-1",
+        claimedAt
+      })
+    ).resolves.toMatchObject({
+      paymentReport: { notificationAttemptCount: 2 },
+      notificationClaimed: true
+    });
+    expect(rpc).toHaveBeenCalledWith(
+      "claim_hiring_wise_payment_report_notification",
+      {
+        p_report_id: "wise-report-1",
+        p_now: claimedAt.toISOString()
+      }
+    );
+  });
+
+  test("marks the expected attempt sent or failed using ISO timestamps", async () => {
+    const { repository, rpc } = wiseFixture();
+    const sentAt = new Date("2026-07-11T10:01:00.000Z");
+    const failedAt = new Date("2026-07-11T10:02:00.000Z");
+
+    await expect(
+      repository.markNotificationSent({
+        reportId: "wise-report-1",
+        attemptNumber: 1,
+        sentAt
+      })
+    ).resolves.toMatchObject({
+      notificationSentAt: sentAt,
+      lastNotificationError: null
+    });
+    expect(rpc).toHaveBeenCalledWith("mark_hiring_wise_payment_report_sent", {
+      p_report_id: "wise-report-1",
+      p_attempt_number: 1,
+      p_sent_at: sentAt.toISOString()
+    });
+
+    await expect(
+      repository.markNotificationFailed({
+        reportId: "wise-report-1",
+        attemptNumber: 1,
+        errorCategory: "EMAIL_DELIVERY_FAILED",
+        failedAt
+      })
+    ).resolves.toMatchObject({
+      notificationSentAt: null,
+      lastNotificationError: "EMAIL_DELIVERY_FAILED"
+    });
+    expect(rpc).toHaveBeenCalledWith("mark_hiring_wise_payment_report_failed", {
+      p_report_id: "wise-report-1",
+      p_attempt_number: 1,
+      p_error_category: "EMAIL_DELIVERY_FAILED",
+      p_failed_at: failedAt.toISOString()
     });
   });
 });
