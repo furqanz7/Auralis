@@ -84,7 +84,11 @@ describe("verification handlers", () => {
       getStatus: vi.fn(async () => ({
         state: "processing",
         applicationReference: "AUR-1",
-        candidateEmail: "nino@example.com"
+        candidateEmail: "nino@example.com",
+        paymentReport: {
+          state: "reported",
+          reportedAt: "2026-07-11T10:00:00.000Z"
+        }
       }))
     };
     const result = response();
@@ -98,7 +102,13 @@ describe("verification handlers", () => {
     expect(service.getStatus).toHaveBeenCalledWith({
       verificationToken: "private-verification-token"
     });
-    expect(JSON.stringify(result.body)).not.toMatch(/score|providerPaymentId/i);
+    expect(result.body.paymentReport).toEqual({
+      state: "reported",
+      reportedAt: "2026-07-11T10:00:00.000Z"
+    });
+    expect(JSON.stringify(result.body)).not.toMatch(
+      /score|providerPaymentId|payerName|payer_name/i
+    );
   });
 
   test("accepts only TBC PaymentId and delegates authoritative lookup", async () => {

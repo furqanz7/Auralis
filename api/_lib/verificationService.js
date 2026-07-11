@@ -54,6 +54,18 @@ function publicState(verification) {
   return "failed";
 }
 
+function publicPaymentReport(paymentReport) {
+  if (!paymentReport) {
+    return { state: "not_reported", reportedAt: null };
+  }
+  return {
+    state: paymentReport.notificationSentAt
+      ? "reported"
+      : "notification_pending",
+    reportedAt: new Date(paymentReport.reportedAt).toISOString()
+  };
+}
+
 function providerMatches(verification, provider) {
   return (
     provider.providerPaymentId === verification.providerPaymentId &&
@@ -83,12 +95,13 @@ export function createVerificationStatusService({
         clock.now()
       );
       if (!record) fail("VERIFICATION_INVALID", 404);
-      const { application, verification } = record;
+      const { application, verification, paymentReport } = record;
       const state = publicState(verification);
       return {
         state,
         checkoutAvailable,
         payment: payment ? { ...payment } : null,
+        paymentReport: publicPaymentReport(paymentReport),
         applicationReference: application.reference,
         candidateEmail: application.email,
         role: { title: application.role.title },

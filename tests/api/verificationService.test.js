@@ -10,7 +10,10 @@ const NOW = new Date("2026-07-10T12:00:00.000Z");
 const VERIFICATION_TOKEN = "verification-token-with-enough-entropy";
 const RETURN_TOKEN = "return-token-with-enough-entropy";
 
-function createFixture({ lifecycleState = "assessment_submitted" } = {}) {
+function createFixture({
+  lifecycleState = "assessment_submitted",
+  paymentReport = null
+} = {}) {
   let now = new Date(NOW);
   const application = {
     id: "application-1",
@@ -26,7 +29,12 @@ function createFixture({ lifecycleState = "assessment_submitted" } = {}) {
     }
   };
   let verification = null;
-  const state = { alerts: [], candidateEmails: [], recruiterEmails: [] };
+  const state = {
+    alerts: [],
+    candidateEmails: [],
+    recruiterEmails: [],
+    paymentReport
+  };
 
   const repository = {
     findApplicationByVerificationTokenHash: vi.fn(async (tokenHash) =>
@@ -113,7 +121,7 @@ function createFixture({ lifecycleState = "assessment_submitted" } = {}) {
         tokenHash === hashToken(VERIFICATION_TOKEN) ||
         tokenHash === verification?.returnTokenHash
       ) {
-        return { application, verification };
+        return { application, verification, paymentReport: state.paymentReport };
       }
       return null;
     })
@@ -351,9 +359,70 @@ describe("verification service", () => {
         provider: "wise",
         mode: "manual",
         url: "https://wise.com/pay/r/nAx15LFiReIdtjc"
+      },
+      paymentReport: {
+        state: "not_reported",
+        reportedAt: null
       }
     });
     expect(fixture.payment.createHostedSession).not.toHaveBeenCalled();
+  });
+
+  test("exposes a pending payment report without private report fields", async () => {
+    const fixture = createFixture({
+      paymentReport: {
+        id: "wise-report-1",
+        applicationId: "application-1",
+        payerName: "Nino Beridze",
+        reportedAt: new Date("2026-07-11T10:00:00.000Z"),
+        notificationSentAt: null,
+        notificationAttemptCount: 1,
+        lastNotificationError: "EMAIL_DELIVERY_FAILED"
+      }
+    });
+    const statusService = createVerificationStatusService({
+      repository: fixture.repository,
+      clock: { now: () => new Date(NOW) }
+    });
+
+    const status = await statusService.getStatus({
+      verificationToken: VERIFICATION_TOKEN
+    });
+
+    expect(status.paymentReport).toEqual({
+      state: "notification_pending",
+      reportedAt: "2026-07-11T10:00:00.000Z"
+    });
+    expect(JSON.stringify(status)).not.toMatch(
+      /payerName|payer_name|Nino Beridze|wise-report-1|notificationAttempt/i
+    );
+  });
+
+  test("exposes a durable reported state after recruiter notification", async () => {
+    const fixture = createFixture({
+      paymentReport: {
+        id: "wise-report-1",
+        payerName: "Nino Beridze",
+        reportedAt: new Date("2026-07-11T10:00:00.000Z"),
+        notificationSentAt: new Date("2026-07-11T10:01:00.000Z")
+      }
+    });
+    const statusService = createVerificationStatusService({
+      repository: fixture.repository,
+      clock: { now: () => new Date(NOW) }
+    });
+
+    const status = await statusService.getStatus({
+      verificationToken: VERIFICATION_TOKEN
+    });
+
+    expect(status.paymentReport).toEqual({
+      state: "reported",
+      reportedAt: "2026-07-11T10:00:00.000Z"
+    });
+    expect(JSON.stringify(status)).not.toMatch(
+      /payerName|payer_name|Nino Beridze|wise-report-1/i
+    );
   });
 
   test("never changes assessment results or recruiter priority", async () => {
