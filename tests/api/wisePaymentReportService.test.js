@@ -181,6 +181,8 @@ describe("Wise payment report service", () => {
     ["blank", "   "],
     ["one code point", "N"],
     ["multiline", "Nino\nBeridze"],
+    ["line separator", "Nino\u2028Beridze"],
+    ["paragraph separator", "Nino\u2029Beridze"],
     ["control character", "Nino\u0000Beridze"],
     ["surrogate", "Nino\uD800Beridze"],
     ["121 code points", "N".repeat(121)]

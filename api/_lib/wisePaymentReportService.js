@@ -18,7 +18,7 @@ function normalizePayerName(value) {
 
   const trimmed = value.trim();
   if (
-    /[\p{Cc}\p{Cs}]/u.test(trimmed) ||
+    /[\p{Cc}\p{Cs}\p{Zl}\p{Zp}]/u.test(trimmed) ||
     [...trimmed].length < 2 ||
     [...trimmed].length > 120
   ) {
