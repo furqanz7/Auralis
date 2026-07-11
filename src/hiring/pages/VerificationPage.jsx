@@ -368,6 +368,11 @@ export default function VerificationPage({ client }) {
                     ? "Your application is complete. Auralis will manually match the EUR 2.99 payment and initiate the refund. No further action is required."
                     : "Payment report saved. Recruiter notification is pending."}
                 </p>
+                {paymentReportState === "reported" ? (
+                  <p className="verification-report-application-note">
+                    Your application remains under independent review based on your experience, accomplishments, skills, and assessment. This payment report does not influence the hiring decision. Auralis will contact you if your application progresses.
+                  </p>
+                ) : null}
                 <div className="verification-report-context verification-report-context-stored">
                   <div><span>Amount reported</span><strong>EUR 2.99</strong></div>
                   <div><span>Application reference</span><strong>{data.applicationReference}</strong></div>

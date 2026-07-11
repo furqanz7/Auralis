@@ -210,6 +210,11 @@ describe("VerificationPage", () => {
       )
     ).toBeVisible();
     expect(
+      screen.getByText(
+        "Your application remains under independent review based on your experience, accomplishments, skills, and assessment. This payment report does not influence the hiring decision. Auralis will contact you if your application progresses."
+      )
+    ).toBeVisible();
+    expect(
       screen.queryByRole("link", { name: "Open Wise payment link" })
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
