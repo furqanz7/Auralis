@@ -7,7 +7,10 @@ import VerificationPage from "../../src/hiring/pages/VerificationPage.jsx";
 const WISE_PAYMENT_URL =
   "https://wise.com/pay/r/nAx15LFiReIdtjc";
 
-function client(paymentUrl = WISE_PAYMENT_URL) {
+function client(
+  paymentUrl = WISE_PAYMENT_URL,
+  paymentReport = { state: "not_reported", reportedAt: null }
+) {
   return {
     getVerificationStatus: vi.fn(async () => ({
       state: "pending",
@@ -18,7 +21,12 @@ function client(paymentUrl = WISE_PAYMENT_URL) {
       payment: paymentUrl
         ? { provider: "wise", mode: "manual", url: paymentUrl }
         : null,
-      verification: { amountMinor: 299, currency: "EUR" }
+      verification: { amountMinor: 299, currency: "EUR" },
+      paymentReport
+    })),
+    reportWisePayment: vi.fn(async () => ({
+      state: "reported",
+      reportedAt: "2026-07-11T10:00:00.000Z"
     }))
   };
 }
@@ -130,5 +138,153 @@ describe("VerificationPage", () => {
     ).toBeVisible();
     expect(screen.getByText(/payment link is currently unavailable/i)).toBeVisible();
     expect(screen.getByText(/application remains submitted/i)).toBeVisible();
+  });
+
+  test("reveals one payer-name field with read-only payment context", async () => {
+    renderPage(client());
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: "I've completed the Wise payment"
+      })
+    );
+
+    expect(
+      screen.getByRole("textbox", { name: "Name used for the Wise payment" })
+    ).toBeVisible();
+    expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    expect(screen.getByText("EUR 2.99")).toBeVisible();
+    expect(screen.getAllByText("AUR-1").length).toBeGreaterThan(0);
+    expect(screen.getByText(/not proof Wise completed/i)).toBeVisible();
+    expect(
+      screen.queryByLabelText(/card|cvv|expiry|receipt|bank|account/i)
+    ).not.toBeInTheDocument();
+  });
+
+  test("blocks blank and oversized payer names in the browser", async () => {
+    const api = client();
+    renderPage(api);
+    await user.click(
+      await screen.findByRole("button", {
+        name: "I've completed the Wise payment"
+      })
+    );
+    const field = screen.getByRole("textbox", {
+      name: "Name used for the Wise payment"
+    });
+
+    await user.click(screen.getByRole("button", { name: "Report payment" }));
+    expect(screen.getByText(/enter the name used for Wise/i)).toBeVisible();
+    expect(api.reportWisePayment).not.toHaveBeenCalled();
+
+    await user.type(field, "N".repeat(121));
+    await user.click(screen.getByRole("button", { name: "Report payment" }));
+    expect(screen.getByText(/120 characters or fewer/i)).toBeVisible();
+    expect(api.reportWisePayment).not.toHaveBeenCalled();
+  });
+
+  test("submits a Unicode payer name and renders the final reported state", async () => {
+    const api = client();
+    renderPage(api);
+    await user.click(
+      await screen.findByRole("button", {
+        name: "I've completed the Wise payment"
+      })
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Name used for the Wise payment" }),
+      "ნინო ბერიძე"
+    );
+    await user.click(screen.getByRole("button", { name: "Report payment" }));
+
+    expect(api.reportWisePayment).toHaveBeenCalledWith(
+      "private-verification-token",
+      "ნინო ბერიძე"
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Payment reported" })
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        "Your application is complete. Auralis will manually match the EUR 2.99 payment and initiate the refund. No further action is required."
+      )
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Open Wise payment link" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(
+      /successful|verified|confirmed|matched|refunded/i
+    );
+  });
+
+  test("saves a pending report and retries recruiter notification without a name", async () => {
+    const api = client();
+    api.reportWisePayment
+      .mockResolvedValueOnce({
+        state: "notification_pending",
+        reportedAt: "2026-07-11T10:00:00.000Z"
+      })
+      .mockResolvedValueOnce({
+        state: "reported",
+        reportedAt: "2026-07-11T10:00:00.000Z"
+      });
+    renderPage(api);
+    await user.click(
+      await screen.findByRole("button", {
+        name: "I've completed the Wise payment"
+      })
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Name used for the Wise payment" }),
+      "Nino Beridze"
+    );
+    await user.click(screen.getByRole("button", { name: "Report payment" }));
+
+    expect(
+      await screen.findByText(
+        "Payment report saved. Recruiter notification is pending."
+      )
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Open Wise payment link" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "auralis.careers@proton.me" })
+    ).toHaveAttribute("href", "mailto:auralis.careers@proton.me");
+
+    await user.click(
+      screen.getByRole("button", { name: "Retry recruiter notification" })
+    );
+    expect(api.reportWisePayment).toHaveBeenLastCalledWith(
+      "private-verification-token"
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Payment reported" })
+    ).toBeVisible();
+  });
+
+  test("renders a persisted reported status immediately after refresh", async () => {
+    renderPage(
+      client(WISE_PAYMENT_URL, {
+        state: "reported",
+        reportedAt: "2026-07-11T10:00:00.000Z"
+      })
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Payment reported" })
+    ).toBeVisible();
+    expect(screen.getAllByText("AUR-1").length).toBeGreaterThan(0);
+    expect(screen.getByText(/refund arrival depends on Wise/i)).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Open Wise payment link" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "I've completed the Wise payment"
+      })
+    ).not.toBeInTheDocument();
   });
 });

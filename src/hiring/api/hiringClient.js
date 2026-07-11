@@ -148,6 +148,20 @@ export function createHiringClient(fetchImpl = fetch) {
       return parseJsonResponse(response);
     },
 
+    async reportWisePayment(token, payerName) {
+      const response = await fetchImpl(
+        `/api/verifications/${encodeURIComponent(token)}/payment-report`,
+        {
+          method: "POST",
+          headers: jsonHeaders,
+          body: JSON.stringify(
+            payerName === undefined ? {} : { payerName }
+          )
+        }
+      );
+      return parseJsonResponse(response);
+    },
+
     async requestPrivacyDeletion(email) {
       const response = await fetchImpl("/api/privacy/delete-request", {
         method: "POST",
@@ -288,6 +302,7 @@ export function createDemoAssessmentClient() {
 }
 
 export function createDemoVerificationClient(state = "pending") {
+  let paymentReport = { state: "not_reported", reportedAt: null };
   return {
     async getVerificationStatus() {
       return {
@@ -304,8 +319,16 @@ export function createDemoVerificationClient(state = "pending") {
           provider: "wise",
           mode: "manual",
           url: "https://wise.com/pay/r/nAx15LFiReIdtjc"
-        }
+        },
+        paymentReport
       };
+    },
+    async reportWisePayment() {
+      paymentReport = {
+        state: "reported",
+        reportedAt: new Date().toISOString()
+      };
+      return paymentReport;
     }
   };
 }

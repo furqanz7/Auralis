@@ -197,6 +197,39 @@ describe("hiring browser client", () => {
     ]);
   });
 
+  test("reports and retries a Wise payment with strict encoded bodies", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        response({
+          state: "reported",
+          reportedAt: "2026-07-11T10:00:00.000Z"
+        })
+      )
+      .mockResolvedValueOnce(
+        response({
+          state: "notification_pending",
+          reportedAt: "2026-07-11T10:00:00.000Z"
+        })
+      );
+    const client = createHiringClient(fetchImpl);
+
+    await client.reportWisePayment("verification/token", "Nino Beridze");
+    await client.reportWisePayment("verification/token");
+
+    expect(fetchImpl.mock.calls[0]).toEqual([
+      "/api/verifications/verification%2Ftoken/payment-report",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ payerName: "Nino Beridze" })
+      })
+    ]);
+    expect(fetchImpl.mock.calls[1]).toEqual([
+      "/api/verifications/verification%2Ftoken/payment-report",
+      expect.objectContaining({ method: "POST", body: "{}" })
+    ]);
+  });
+
   test("requests and confirms privacy deletion with strict JSON bodies", async () => {
     const fetchImpl = vi
       .fn()
