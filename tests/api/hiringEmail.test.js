@@ -161,6 +161,43 @@ describe("hiring email adapter", () => {
     });
   });
 
+  test("notifies the recruiter of a Wise payment report without sensitive data", async () => {
+    const { adapter, application, send } = createFixture();
+
+    await adapter.enqueueWisePaymentReport({
+      application: { ...application, fullName: "Nino Beridze" },
+      paymentReport: {
+        payerName: "Nino <script>alert(1)</script>",
+        amountMinor: 299,
+        currency: "EUR",
+        reportedAt: new Date("2026-07-11T10:00:00.000Z")
+      }
+    });
+
+    const [message, options] = send.mock.calls[0];
+    expect(message).toMatchObject({
+      to: ["auralis.careers@proton.me"],
+      subject: "Wise payment reported - AUR-1"
+    });
+    expect(message.html).toContain("Nino Beridze");
+    expect(message.html).toContain("nino@example.com");
+    expect(message.html).toContain("Senior AI Product Engineer");
+    expect(message.html).toContain("Nino &lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(message.html).toContain("EUR 2.99");
+    expect(message.html).toContain("2026-07-11T10:00:00.000Z");
+    expect(message.html).toMatch(/confirm.*Wise/i);
+    expect(message.html).toMatch(/refund.*manually|manually.*refund/i);
+    expect(message.html).toMatch(/not proof/i);
+    expect(message.html).toMatch(/does not affect hiring/i);
+    expect(message.html).not.toContain("<script>");
+    expect(message.html).not.toContain("campaign/upload/cv.pdf");
+    expect(message.html).not.toMatch(/verification-token|card number|cvv|credential/i);
+    expect(message).not.toHaveProperty("attachments");
+    expect(options).toEqual({
+      idempotencyKey: "wise-payment-report/application-1"
+    });
+  });
+
   test("sends a private deletion confirmation without deleting on link open", async () => {
     const { adapter, application, send } = createFixture();
 

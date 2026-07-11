@@ -169,6 +169,27 @@ export function createHiringEmailAdapter({
       );
     },
 
+    async enqueueWisePaymentReport({ application, paymentReport }) {
+      return send(
+        {
+          from,
+          to: [recruiterEmail],
+          subject: `Wise payment reported - ${application.reference}`,
+          html: [
+            `<p>Application reference: ${escapeHtml(application.reference)}</p>`,
+            `<p>Candidate: ${escapeHtml(application.fullName)} (${escapeHtml(application.email)})</p>`,
+            `<p>Role: ${escapeHtml(application.role.title)}</p>`,
+            `<p>Name used for the Wise payment: ${escapeHtml(paymentReport.payerName)}</p>`,
+            "<p>Amount reported: EUR 2.99</p>",
+            `<p>Reported at: ${escapeHtml(new Date(paymentReport.reportedAt).toISOString())}</p>`,
+            "<p>Confirm the transaction in Wise and initiate the refund manually.</p>",
+            "<p>This report is not proof that Wise completed the payment and does not affect hiring review or selection.</p>"
+          ].join("")
+        },
+        `wise-payment-report/${application.id}`
+      );
+    },
+
     async enqueueDeletionConfirmation({ application, deletionToken }) {
       const confirmationUrl = privateUrl(
         siteUrl,

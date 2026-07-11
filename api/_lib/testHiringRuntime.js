@@ -7,6 +7,7 @@ import {
 import { createTestHiringProviders } from "./adapters/testProviders.js";
 import { createHiringPrivacyService } from "./privacyService.js";
 import { createVerificationService } from "./verificationService.js";
+import { createWisePaymentReportService } from "./wisePaymentReportService.js";
 import {
   createAssessmentTokenFactory,
   createVerificationReturnTokenFactory
@@ -54,6 +55,11 @@ export function createTestHiringRuntime({
     clock,
     returnTokenFactory
   });
+  const wisePaymentReport = createWisePaymentReportService({
+    repository: providers.repositories.wisePaymentReport,
+    email: providers.email,
+    clock
+  });
   const privacy = createHiringPrivacyService({
     repository: providers.repositories.privacy,
     storage: providers.storage,
@@ -66,6 +72,7 @@ export function createTestHiringRuntime({
     application,
     assessment,
     verification,
+    wisePaymentReport,
     privacy,
     providers,
     campaign: {

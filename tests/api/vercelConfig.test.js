@@ -132,6 +132,16 @@ describe("Vercel private assessment routing", () => {
     );
   });
 
+  test("routes Wise payment reports through the existing verification function", async () => {
+    const config = await readConfig();
+
+    expect(config.rewrites).toContainEqual({
+      source: "/api/verifications/:token/payment-report",
+      destination:
+        "/api/verifications/:token/status?action=payment-report"
+    });
+  });
+
   test.each([
     "/verify/(.*)",
     "/application/(.*)",

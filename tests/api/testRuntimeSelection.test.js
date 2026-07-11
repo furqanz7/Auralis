@@ -15,12 +15,14 @@ describe("test provider runtime selection", () => {
     );
 
     const [{ getApplicationRuntimeService }, { getAssessmentRuntimeService },
-      { getVerificationRuntimeService }, { getPrivacyRuntimeService }] =
+      { getVerificationRuntimeService }, { getPrivacyRuntimeService },
+      { getWisePaymentReportRuntimeService }] =
       await Promise.all([
         import("../../api/_lib/applicationRuntime.js"),
         import("../../api/_lib/assessmentRuntime.js"),
         import("../../api/_lib/verificationRuntime.js"),
-        import("../../api/_lib/privacyRuntime.js")
+        import("../../api/_lib/privacyRuntime.js"),
+        import("../../api/_lib/wisePaymentReportRuntime.js")
       ]);
 
     expect(getApplicationRuntimeService()).toEqual(
@@ -34,6 +36,9 @@ describe("test provider runtime selection", () => {
     );
     expect(getPrivacyRuntimeService()).toEqual(
       expect.objectContaining({ purgeExpiredApplications: expect.any(Function) })
+    );
+    expect(getWisePaymentReportRuntimeService()).toEqual(
+      expect.objectContaining({ reportPayment: expect.any(Function) })
     );
   });
 });

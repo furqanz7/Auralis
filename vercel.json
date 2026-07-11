@@ -9,6 +9,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/verifications/:token/payment-report",
+      "destination": "/api/verifications/:token/status?action=payment-report"
+    },
+    {
       "source": "/api/assessments/:token/answers/:questionId",
       "destination": "/api/assessments?token=:token&action=answer&questionId=:questionId"
     },

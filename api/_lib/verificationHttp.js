@@ -5,6 +5,10 @@ const verificationTokenSchema = z.string().min(16).max(512);
 
 export const emptyVerificationBodySchema = z.object({}).strict();
 
+export const wisePaymentReportBodySchema = z.object({
+  payerName: z.string().optional()
+}).strict();
+
 export function readVerificationToken(request) {
   const parsed = verificationTokenSchema.safeParse(
     getQueryParam(request, "token")

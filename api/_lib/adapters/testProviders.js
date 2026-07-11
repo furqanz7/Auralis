@@ -48,6 +48,7 @@ export function createTestHiringProviders({
     tokens: [],
     assessmentSessions: [],
     verifications: [],
+    wisePaymentReports: [],
     objects: new Map(),
     emails: [],
     payments: [],
@@ -111,6 +112,9 @@ export function createTestHiringProviders({
     },
     async enqueueVerificationAlert(input) {
       return emailResult("verification_alert", input);
+    },
+    async enqueueWisePaymentReport(input) {
+      return emailResult("wise_payment_report", input);
     },
     async enqueueDeletionConfirmation(input) {
       return emailResult("privacy_deletion", input);
@@ -459,6 +463,149 @@ export function createTestHiringProviders({
     }
   };
 
+  function wisePaymentReportById(reportId) {
+    return state.wisePaymentReports.find(
+      (report) => report.id === reportId
+    ) ?? null;
+  }
+
+  function wisePaymentReportClaim(report, claimedAt) {
+    if (
+      !report ||
+      report.notificationSentAt ||
+      report.notificationAttemptCount >= 100
+    ) {
+      return false;
+    }
+    const staleClaim =
+      report.lastNotificationError === "NOTIFICATION_IN_PROGRESS" &&
+      report.notificationClaimedAt <= new Date(claimedAt.getTime() - 5 * 60 * 1000);
+    if (
+      report.lastNotificationError !== "EMAIL_DELIVERY_FAILED" &&
+      !staleClaim
+    ) {
+      return false;
+    }
+    report.notificationClaimedAt = claimedAt;
+    report.notificationFailedAt = null;
+    report.notificationAttemptCount += 1;
+    report.lastNotificationError = "NOTIFICATION_IN_PROGRESS";
+    return true;
+  }
+
+  function wisePaymentReportResult(report, notificationClaimed) {
+    const application = state.applications.find(
+      (candidate) => candidate.id === report?.applicationId
+    ) ?? null;
+    return report
+      ? { application, paymentReport: report, notificationClaimed }
+      : null;
+  }
+
+  const wisePaymentReportRepository = {
+    async findByAccessTokenHash(tokenHash, at) {
+      const token = state.tokens.find(
+        (candidate) =>
+          candidate.hash === tokenHash &&
+          tokenIsActive(candidate, at, "verification")
+      );
+      if (!token) return null;
+      const application = state.applications.find(
+        (candidate) => candidate.id === token.applicationId
+      ) ?? null;
+      if (!application) return null;
+      const paymentReport = state.wisePaymentReports.find(
+        (report) => report.applicationId === application.id
+      ) ?? null;
+      return { application, paymentReport };
+    },
+    async createAndClaim({ tokenHash, payerName, reportedAt }) {
+      const token = state.tokens.find(
+        (candidate) =>
+          candidate.hash === tokenHash &&
+          tokenIsActive(candidate, reportedAt, "verification")
+      );
+      const application = token
+        ? state.applications.find(
+            (candidate) => candidate.id === token.applicationId
+          )
+        : null;
+      if (!application || application.lifecycleState !== "assessment_submitted") {
+        return null;
+      }
+
+      let report = state.wisePaymentReports.find(
+        (candidate) => candidate.applicationId === application.id
+      );
+      if (report) {
+        return wisePaymentReportResult(
+          report,
+          wisePaymentReportClaim(report, reportedAt)
+        );
+      }
+
+      report = {
+        id: nextId("wise-report"),
+        applicationId: application.id,
+        payerName,
+        amountMinor: 299,
+        currency: "EUR",
+        reportedAt,
+        notificationSentAt: null,
+        notificationClaimedAt: reportedAt,
+        notificationFailedAt: null,
+        notificationAttemptCount: 1,
+        lastNotificationError: "NOTIFICATION_IN_PROGRESS"
+      };
+      state.wisePaymentReports.push(report);
+      return wisePaymentReportResult(report, true);
+    },
+    async claimNotification({ reportId, claimedAt }) {
+      const report = wisePaymentReportById(reportId);
+      return wisePaymentReportResult(
+        report,
+        wisePaymentReportClaim(report, claimedAt)
+      );
+    },
+    async markNotificationSent({ reportId, attemptNumber, sentAt }) {
+      const report = wisePaymentReportById(reportId);
+      if (
+        !report ||
+        report.notificationSentAt ||
+        report.notificationAttemptCount !== attemptNumber ||
+        report.lastNotificationError !== "NOTIFICATION_IN_PROGRESS"
+      ) {
+        return null;
+      }
+      report.notificationSentAt = sentAt;
+      report.notificationClaimedAt = null;
+      report.notificationFailedAt = null;
+      report.lastNotificationError = null;
+      return report;
+    },
+    async markNotificationFailed({
+      reportId,
+      attemptNumber,
+      errorCategory,
+      failedAt
+    }) {
+      const report = wisePaymentReportById(reportId);
+      if (
+        !report ||
+        report.notificationSentAt ||
+        report.notificationAttemptCount !== attemptNumber ||
+        report.lastNotificationError !== "NOTIFICATION_IN_PROGRESS" ||
+        errorCategory !== "EMAIL_DELIVERY_FAILED"
+      ) {
+        return null;
+      }
+      report.notificationClaimedAt = null;
+      report.notificationFailedAt = failedAt;
+      report.lastNotificationError = errorCategory;
+      return report;
+    }
+  };
+
   const payment = {
     async createHostedSession({ merchantPaymentId }) {
       const providerPaymentId = nextId("test-payment");
@@ -564,6 +711,7 @@ export function createTestHiringProviders({
       application: applicationRepository,
       assessment: assessmentRepository,
       verification: verificationRepository,
+      wisePaymentReport: wisePaymentReportRepository,
       privacy: privacyRepository
     }
   };
