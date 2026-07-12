@@ -128,7 +128,12 @@ p {
   z-index: 100;
   pointer-events: none;
   transform: translateY(100%);
+  visibility: hidden;
   background: var(--red);
+}
+
+.route-veil.is-active {
+  visibility: visible;
 }
 
 .site-page {

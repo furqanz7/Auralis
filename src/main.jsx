@@ -62,8 +62,11 @@ function unmount(container) {
 
 function veilIn() {
   if (reduceMotion) return Promise.resolve();
+  const veil = document.querySelector(".route-veil");
+  if (!veil) return Promise.resolve();
+  veil.classList.add("is-active");
   return anime({
-    targets: ".route-veil",
+    targets: veil,
     translateY: ["100%", "0%"],
     duration: 620,
     easing: "easeInOutExpo"
@@ -71,15 +74,16 @@ function veilIn() {
 }
 
 function veilOut() {
-  if (reduceMotion) return Promise.resolve();
+  const veil = document.querySelector(".route-veil");
+  if (reduceMotion || !veil) return Promise.resolve();
   return anime({
-    targets: ".route-veil",
+    targets: veil,
     translateY: ["0%", "-100%"],
     duration: 720,
     easing: "easeInOutExpo",
     complete: () => {
-      const veil = document.querySelector(".route-veil");
-      if (veil) veil.style.transform = "translateY(100%)";
+      veil.style.transform = "translateY(100%)";
+      veil.classList.remove("is-active");
     }
   }).finished;
 }
