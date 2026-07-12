@@ -137,7 +137,7 @@ export default function VerificationPage({ client }) {
       setLocalPaymentReport(result);
       setReportFormOpen(false);
     } catch {
-      setReportError("The payment report could not be saved. Please try again.");
+      setReportError("The payment details could not be saved. Please try again.");
     } finally {
       setReportSubmitting(false);
     }
@@ -196,9 +196,9 @@ export default function VerificationPage({ client }) {
       : null;
   const paymentStatusLabel =
     paymentReportState === "reported"
-      ? "Payment reported"
+      ? "Payment details received"
       : paymentReportState === "notification_pending"
-        ? "Payment report saved"
+        ? "Payment details saved"
         : paymentUrl
           ? "Manual Wise payment"
           : "Payment link unavailable";
@@ -319,7 +319,7 @@ export default function VerificationPage({ client }) {
                     onSubmit={submitPaymentReport}
                     noValidate
                   >
-                    <div className="verification-report-context" aria-label="Payment report context">
+                    <div className="verification-report-context" aria-label="Wise payment details">
                       <div><span>Amount</span><strong>EUR 2.99</strong></div>
                       <div><span>Application reference</span><strong>{data.applicationReference}</strong></div>
                     </div>
@@ -343,14 +343,14 @@ export default function VerificationPage({ client }) {
                       ) : null}
                     </div>
                     <p id="wise-report-guidance" className="verification-report-guidance">
-                      A payment report is not proof Wise completed the transaction. Auralis compares the name, amount, and reported time with Wise activity.
+                      Submitting these details does not prove Wise completed the transaction. Auralis compares the name, amount, and submission time with Wise activity.
                     </p>
                     <button
                       className="verification-report-command"
                       type="submit"
                       disabled={reportSubmitting}
                     >
-                      {reportSubmitting ? "Saving report" : "Report payment"}
+                      {reportSubmitting ? "Saving details" : "Submit payment details"}
                       <Check size={20} aria-hidden="true" />
                     </button>
                   </form>
@@ -360,21 +360,21 @@ export default function VerificationPage({ client }) {
               <div className="verification-report-state" aria-live="polite">
                 <h2 id="portal-title">
                   {paymentReportState === "reported"
-                    ? "Payment reported"
-                    : "Payment report saved"}
+                    ? "Payment details received"
+                    : "Payment details saved"}
                 </h2>
                 <p className="verification-report-state-lead">
                   {paymentReportState === "reported"
                     ? "Your application is complete. Auralis will manually match the EUR 2.99 payment and initiate the refund. No further action is required."
-                    : "Payment report saved. Recruiter notification is pending."}
+                    : "Payment details saved. Recruiter notification is pending."}
                 </p>
                 {paymentReportState === "reported" ? (
                   <p className="verification-report-application-note">
-                    Your application remains under independent review based on your experience, accomplishments, skills, and assessment. This payment report does not influence the hiring decision. Auralis will contact you if your application progresses.
+                    Your application remains under independent review based on your experience, accomplishments, skills, and assessment. Submitting payment details does not influence the hiring decision. Auralis will contact you if your application progresses.
                   </p>
                 ) : null}
                 <div className="verification-report-context verification-report-context-stored">
-                  <div><span>Amount reported</span><strong>EUR 2.99</strong></div>
+                  <div><span>Payment amount</span><strong>EUR 2.99</strong></div>
                   <div><span>Application reference</span><strong>{data.applicationReference}</strong></div>
                 </div>
                 <p className="verification-report-timing">

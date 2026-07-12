@@ -177,7 +177,7 @@ describe("hiring email adapter", () => {
     const [message, options] = send.mock.calls[0];
     expect(message).toMatchObject({
       to: ["auralis.careers@proton.me"],
-      subject: "Wise payment reported - AUR-1"
+      subject: "Wise payment details submitted - AUR-1"
     });
     expect(message.html).toContain("Nino Beridze");
     expect(message.html).toContain("nino@example.com");

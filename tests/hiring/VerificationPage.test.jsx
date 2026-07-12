@@ -155,7 +155,7 @@ describe("VerificationPage", () => {
     expect(screen.getAllByRole("textbox")).toHaveLength(1);
     expect(screen.getByText("EUR 2.99")).toBeVisible();
     expect(screen.getAllByText("AUR-1").length).toBeGreaterThan(0);
-    expect(screen.getByText(/not proof Wise completed/i)).toBeVisible();
+    expect(screen.getByText(/submitting these details does not prove Wise completed/i)).toBeVisible();
     expect(
       screen.queryByLabelText(/card|cvv|expiry|receipt|bank|account/i)
     ).not.toBeInTheDocument();
@@ -173,12 +173,12 @@ describe("VerificationPage", () => {
       name: "Name used for the Wise payment"
     });
 
-    await user.click(screen.getByRole("button", { name: "Report payment" }));
+    await user.click(screen.getByRole("button", { name: "Submit payment details" }));
     expect(screen.getByText(/enter the name used for Wise/i)).toBeVisible();
     expect(api.reportWisePayment).not.toHaveBeenCalled();
 
     await user.type(field, "N".repeat(121));
-    await user.click(screen.getByRole("button", { name: "Report payment" }));
+    await user.click(screen.getByRole("button", { name: "Submit payment details" }));
     expect(screen.getByText(/120 characters or fewer/i)).toBeVisible();
     expect(api.reportWisePayment).not.toHaveBeenCalled();
   });
@@ -195,14 +195,14 @@ describe("VerificationPage", () => {
       screen.getByRole("textbox", { name: "Name used for the Wise payment" }),
       "ნინო ბერიძე"
     );
-    await user.click(screen.getByRole("button", { name: "Report payment" }));
+    await user.click(screen.getByRole("button", { name: "Submit payment details" }));
 
     expect(api.reportWisePayment).toHaveBeenCalledWith(
       "private-verification-token",
       "ნინო ბერიძე"
     );
     expect(
-      await screen.findByRole("heading", { name: "Payment reported" })
+      await screen.findByRole("heading", { name: "Payment details received" })
     ).toBeVisible();
     expect(
       screen.getByText(
@@ -211,7 +211,7 @@ describe("VerificationPage", () => {
     ).toBeVisible();
     expect(
       screen.getByText(
-        "Your application remains under independent review based on your experience, accomplishments, skills, and assessment. This payment report does not influence the hiring decision. Auralis will contact you if your application progresses."
+        "Your application remains under independent review based on your experience, accomplishments, skills, and assessment. Submitting payment details does not influence the hiring decision. Auralis will contact you if your application progresses."
       )
     ).toBeVisible();
     expect(
@@ -219,7 +219,7 @@ describe("VerificationPage", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(
-      /successful|verified|confirmed|matched|refunded/i
+      /successful|verified|confirmed|matched|refunded|\breport(?:ed|ing)?\b/i
     );
   });
 
@@ -244,11 +244,11 @@ describe("VerificationPage", () => {
       screen.getByRole("textbox", { name: "Name used for the Wise payment" }),
       "Nino Beridze"
     );
-    await user.click(screen.getByRole("button", { name: "Report payment" }));
+    await user.click(screen.getByRole("button", { name: "Submit payment details" }));
 
     expect(
       await screen.findByText(
-        "Payment report saved. Recruiter notification is pending."
+        "Payment details saved. Recruiter notification is pending."
       )
     ).toBeVisible();
     expect(
@@ -266,7 +266,7 @@ describe("VerificationPage", () => {
       "private-verification-token"
     );
     expect(
-      await screen.findByRole("heading", { name: "Payment reported" })
+      await screen.findByRole("heading", { name: "Payment details received" })
     ).toBeVisible();
   });
 
@@ -279,7 +279,7 @@ describe("VerificationPage", () => {
     );
 
     expect(
-      await screen.findByRole("heading", { name: "Payment reported" })
+      await screen.findByRole("heading", { name: "Payment details received" })
     ).toBeVisible();
     expect(screen.getAllByText("AUR-1").length).toBeGreaterThan(0);
     expect(screen.getByText(/refund arrival depends on Wise/i)).toBeVisible();
