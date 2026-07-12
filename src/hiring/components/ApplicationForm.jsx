@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, LockKeyhole, Paperclip, Upload } from "lucide-react";
+import { ArrowRight, FileText, Paperclip, Upload } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   APPLICATION_MAX_CV_BYTES,
@@ -400,9 +400,6 @@ export default function ApplicationForm({
             onChange={updateField}
             aria-label="I agree to the privacy notice"
           />
-          <span className="hiring-consent-icon" aria-hidden="true">
-            <LockKeyhole size={16} />
-          </span>
           <span>
             I agree to the privacy notice. <a href="/privacy" target="_blank" rel="noreferrer">Read it here</a>
           </span>

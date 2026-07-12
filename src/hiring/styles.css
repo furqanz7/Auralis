@@ -408,27 +408,14 @@ body.hiring-active .route-veil {
 }
 
 .hiring-consent input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: var(--signal);
+  cursor: pointer;
 }
 
-.hiring-consent-icon {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border: 1px solid var(--hiring-line-strong);
-  color: var(--hiring-muted);
-}
-
-.hiring-consent input:checked + .hiring-consent-icon {
-  border-color: var(--signal);
-  color: var(--signal);
-}
-
-.hiring-consent input:focus-visible + .hiring-consent-icon {
+.hiring-consent input:focus-visible {
   outline: 2px solid var(--signal);
   outline-offset: 3px;
 }
@@ -440,7 +427,7 @@ body.hiring-active .route-veil {
 
 .hiring-consent-error {
   grid-column: 1;
-  margin: -7px 0 0 37px;
+  margin: -7px 0 0 33px;
 }
 
 .hiring-submit {

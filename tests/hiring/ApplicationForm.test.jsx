@@ -65,6 +65,22 @@ describe("ApplicationForm", () => {
     expect(screen.getByLabelText("CV / Resume")).toBeInTheDocument();
   });
 
+  test("uses the checkbox itself as the privacy consent control", () => {
+    render(
+      <ApplicationForm
+        role={designRole}
+        campaign={campaign}
+        client={createClient()}
+      />
+    );
+
+    const checkbox = screen.getByRole("checkbox", {
+      name: "I agree to the privacy notice"
+    });
+    expect(checkbox).not.toBeChecked();
+    expect(checkbox.closest("label").querySelector("svg")).toBeNull();
+  });
+
   test("rejects a non-PDF CV before requesting an upload URL", async () => {
     const user = userEvent.setup({ applyAccept: false });
     const client = createClient();
